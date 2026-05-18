@@ -1,0 +1,18 @@
+{
+  "number": "INC0012345",
+  "priority": "P2",
+  "openedAt": "2026-05-18T09:15:00+10:00",
+  "shortDescription": "Customers receive timeout on checkout",
+  "description": "Call center reports multiple external customers cannot complete checkout.",
+  "callerNotes": "Customer says payment page spins for about one minute and then fails.",
+  "affectedSystems": ["checkout-web", "payment-orchestrator", "vendor-payment-gateway"],
+  "evidence": [
+    {
+      "source": "ServiceNow",
+      "reference": "INC0012345",
+      "confidence": "reported",
+      "summary": "Three call center reports mention checkout timeout in the last 20 minutes."
+    }
+  ]
+}
+
