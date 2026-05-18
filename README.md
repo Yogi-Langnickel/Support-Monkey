@@ -32,6 +32,10 @@ Use `docs/transport/bootstrap-prompt.md` to carry this project to a work
 machine through Slack/email. The receiving environment should create local
 `.env` values from `.env.example` and keep real workplace data out of git.
 
+For the expected Windows workstation setup, use
+`docs/setup/windows-wsl.md`. The recommended control center is VS Code with the
+Remote - WSL extension, running Support-Monkey from the WSL filesystem.
+
 Use `docs/prompts/` as the portable assistant prompt pack for VS Code Copilot,
 Claude Enterprise, or another approved workplace AI assistant. These prompts
 define the Support-Monkey orchestrator, incident council, evidence review, RCA

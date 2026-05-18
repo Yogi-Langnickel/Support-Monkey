@@ -1,8 +1,12 @@
 .env
 .venv/
+.support-monkey/
 __pycache__/
 *.pyc
 .pytest_cache/
+cases/
 data/private/
+exports/
 outputs/private/
-
+raw-evidence/
+*.log
