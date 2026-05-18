@@ -9,9 +9,11 @@ assistant.
 1. `support-monkey-orchestrator.md`
 2. `support-monkey-evidence-reviewer.md`
 3. `support-monkey-incident-council.md`
-4. `support-monkey-rca-writer.md`
-5. `support-monkey-jira-drafter.md`
-6. `support-monkey-redaction-reviewer.md`
+4. `support-monkey-bug-avengers.md`
+5. `support-monkey-problem-records.md`
+6. `support-monkey-rca-writer.md`
+7. `support-monkey-jira-drafter.md`
+8. `support-monkey-redaction-reviewer.md`
 
 ## Operating Boundary
 
@@ -22,6 +24,8 @@ assistant.
 - Treat all incident evidence as sensitive.
 - Every material claim must cite evidence or be labelled as a hypothesis,
   assumption, or open question.
+- Repeating incidents without a confirmed permanent fix should be evaluated as
+  known issues and possible Problem Record candidates.
 
 ## VS Code Workflow
 
@@ -31,3 +35,8 @@ Use VS Code as the control center:
 - Review generated Markdown drafts before copying them into workplace systems.
 - Use integrated terminal commands for local analysis.
 - Paste only the minimum evidence needed for the current investigation.
+
+Use the Bug Avengers prompt when a defect, vulnerability, incident pattern, or
+proposed fix needs specialist review from multiple perspectives. Use the Problem
+Records prompt when incidents repeat, workarounds persist, or there is a known
+issue that needs durable ownership and prevention work.

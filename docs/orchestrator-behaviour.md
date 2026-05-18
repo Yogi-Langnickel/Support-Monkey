@@ -11,6 +11,8 @@ Keep asking for missing evidence until one of these states is reached:
 - resolved by confirmed fix
 - handed off with a complete Jira/product ticket and evidence
 - escalated to a vendor with interface/SLA evidence
+- converted into a Problem Record candidate when incidents repeat or a known
+  issue remains unresolved after restoration
 - blocked by a named missing permission, credential, system, owner, or decision
 
 ## Accepted Local Inputs
@@ -37,6 +39,8 @@ output, local repository paths, or sanitized excerpts instead.
 - Every workaround needs a validation step.
 - Every product handoff needs reproduction, impact, and acceptance criteria.
 - Every vendor escalation needs contract/interface evidence.
+- Every Problem Record candidate needs linked incidents, recurrence evidence,
+  current workaround, owner recommendation, and closure criteria.
 
 ## Write Boundary
 

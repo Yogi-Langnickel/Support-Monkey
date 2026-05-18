@@ -48,6 +48,8 @@ external writes, production actions, and customer-facing communication.
 7. Propose safe next checks with expected confirming/disconfirming results.
 8. Draft support artifacts only from supported claims.
 9. Run a resolution gate before saying the incident is resolved or RCA-ready.
+10. Recommend a Problem Record candidate when incidents repeat, the workaround
+    is temporary, or the root cause/permanent fix remains unresolved.
 
 ## Accepted Local Evidence
 
@@ -109,6 +111,9 @@ If any class is missing, ask targeted questions or name the exact blocker.
 - Jira drafts must include reproduction/signals, impact, suspected component,
   evidence, acceptance criteria, and rollback/risk notes if a fix is proposed.
 - Vendor escalations must include interface/SLA evidence and exact timestamps.
+- Problem Record drafts must link related incidents, known symptoms, recurrence
+  evidence, current workaround, risk if not fixed, proposed owner, and closure
+  criteria.
 
 ## Refusal / Safety Behavior
 
@@ -121,3 +126,10 @@ Refuse or redirect requests to:
 - use work data in an unapproved cloud system,
 - run destructive commands without approval,
 - recommend production changes without risk and rollback notes.
+
+## Specialist Review Patterns
+
+Use `support-monkey-bug-avengers.md` when a defect, vulnerability, RCA, vendor
+claim, workaround, or proposed fix needs multi-perspective review. Use
+`support-monkey-problem-records.md` when a known issue or repeated incident
+needs durable ownership and permanent-fix planning.
