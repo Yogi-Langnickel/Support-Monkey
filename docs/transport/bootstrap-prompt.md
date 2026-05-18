@@ -24,6 +24,9 @@ Local constraints:
 - Do not print, store, or commit credentials.
 - Prefer local AWS CLI profiles for CloudWatch access.
 - Use local repo checkouts when available.
+- Treat API integrations as optional. If an API is not practical or not
+  permitted, use exported files, pasted logs, screenshots, local AWS CLI output,
+  and local repository paths.
 - Treat ServiceNow, Confluence, Jira, Slack/Teams/email, AWS, Azure, NewRelic,
   repo code, and vendor material as confidential workplace data.
 
@@ -36,6 +39,8 @@ Initial MVP:
 5. Ask me for missing information, logs, repo paths, timestamps, screenshots,
    vendor payloads, or AWS CLI output until the issue is 100% resolved or the
    exact blocker is documented.
+6. Run a resolution gate before claiming root cause, closure, vendor fault, or
+   Jira-ready handoff.
 
 First task:
 - Inspect the local Support-Monkey repo.
@@ -46,4 +51,3 @@ First task:
 - If API integrations are blocked or not permitted, use local files, local repo
   checkouts, pasted logs, and command output instead.
 ```
-

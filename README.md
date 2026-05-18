@@ -37,6 +37,7 @@ machine through Slack/email. The receiving environment should create local
 ```sh
 python3 -m support_monkey.cli triage examples/incident.sample.json
 python3 -m support_monkey.cli questions examples/incident.sample.json
+python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
 ```
 
 The command reads a sanitized incident JSON file and emits a Markdown triage
@@ -58,3 +59,12 @@ Support-Monkey should behave like a persistent incident orchestrator:
 
 The `questions` command is the first local helper for this behaviour. It
 generates concrete follow-up questions from incomplete incident data.
+
+The `resolution-gate` command is the conservative closure guard. It reports
+which evidence classes are still missing before Support-Monkey may claim root
+cause, impact, workaround, fix validation, vendor fault, or Jira-ready handoff.
+
+API integrations are optional, not assumed. If ServiceNow, Confluence, AWS,
+NewRelic, Jira, or repository APIs are blocked by policy or access, use local
+exports, screenshots, pasted command output, and local repo checkouts as the
+evidence source.

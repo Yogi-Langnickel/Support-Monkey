@@ -17,11 +17,13 @@ def build_triage_pack(incident: Incident) -> TriagePack:
         "CloudWatch logs for affected services around the incident window",
         "Recent deployments or configuration changes",
         "Known related incidents, Jira tickets, or vendor notices",
+        "Local repo path, runbook excerpt, pasted log output, or screenshot when API integration is blocked or not permitted",
     )
     next_actions = (
         "Confirm customer/user impact and affected journey from ticket notes.",
         "Identify owning service/repository from affected system names and runbooks.",
         "Collect cited log/APM evidence before stating root cause.",
+        "If ServiceNow, Confluence, NewRelic, AWS, or repository APIs are unavailable, ask for local exports, pasted outputs, or local checkout paths instead.",
         "Draft workaround, product Jira, vendor escalation, or hotfix branch only after evidence supports it.",
     )
     return TriagePack(

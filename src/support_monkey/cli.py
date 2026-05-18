@@ -7,6 +7,7 @@ import sys
 
 from .models import Incident
 from .questions import render_questions_markdown
+from .resolution import render_resolution_gate_markdown
 from .triage import build_triage_pack, render_markdown
 
 
@@ -23,11 +24,19 @@ def main(argv: list[str] | None = None) -> int:
     )
     questions_parser.add_argument("incident_json", type=Path)
 
+    resolution_parser = subparsers.add_parser(
+        "resolution-gate",
+        help="Check whether an incident has enough cited evidence for human review.",
+    )
+    resolution_parser.add_argument("incident_json", type=Path)
+
     args = parser.parse_args(argv)
     if args.command == "triage":
         return _triage(args.incident_json)
     if args.command == "questions":
         return _questions(args.incident_json)
+    if args.command == "resolution-gate":
+        return _resolution_gate(args.incident_json)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -45,6 +54,14 @@ def _questions(path: Path) -> int:
     if incident is None:
         return 2
     print(render_questions_markdown(incident), end="")
+    return 0
+
+
+def _resolution_gate(path: Path) -> int:
+    incident = _read_incident(path)
+    if incident is None:
+        return 2
+    print(render_resolution_gate_markdown(incident), end="")
     return 0
 
 
