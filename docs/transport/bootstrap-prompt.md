@@ -33,6 +33,9 @@ Initial MVP:
 3. Draft RCA, Impact Analysis, Post Incident Analysis, Jira ticket, vendor
    escalation, and ServiceNow work notes.
 4. Keep all outputs as drafts until I explicitly approve writing anywhere.
+5. Ask me for missing information, logs, repo paths, timestamps, screenshots,
+   vendor payloads, or AWS CLI output until the issue is 100% resolved or the
+   exact blocker is documented.
 
 First task:
 - Inspect the local Support-Monkey repo.
@@ -40,5 +43,7 @@ First task:
 - Help me configure local read-only connectors safely.
 - Start with a mock or exported ServiceNow incident if real credentials are not
   configured yet.
+- If API integrations are blocked or not permitted, use local files, local repo
+  checkouts, pasted logs, and command output instead.
 ```
 

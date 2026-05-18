@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from .models import Incident, TriagePack
+from .questions import generate_clarification_questions
 
 
 def build_triage_pack(incident: Incident) -> TriagePack:
@@ -85,6 +86,9 @@ def render_markdown(pack: TriagePack) -> str:
         "## Recommended Next Actions",
         *_bullet_list(pack.next_actions),
         "",
+        "## Clarification Questions",
+        *_bullet_list(generate_clarification_questions(incident)),
+        "",
         "## Draft Work Notes",
         (
             "Initial triage started. Current state is evidence gathering; no root cause "
@@ -96,4 +100,3 @@ def render_markdown(pack: TriagePack) -> str:
 
 def _bullet_list(items: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(f"- {item}" for item in items)
-

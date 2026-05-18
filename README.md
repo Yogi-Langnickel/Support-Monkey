@@ -36,8 +36,25 @@ machine through Slack/email. The receiving environment should create local
 
 ```sh
 python3 -m support_monkey.cli triage examples/incident.sample.json
+python3 -m support_monkey.cli questions examples/incident.sample.json
 ```
 
 The command reads a sanitized incident JSON file and emits a Markdown triage
 pack to stdout.
 
+## Orchestrator Behaviour
+
+Support-Monkey should behave like a persistent incident orchestrator:
+
+1. Ask for missing evidence until the problem is fully resolved or the exact
+   external blocker is proven.
+2. Prefer local evidence: ServiceNow exports, pasted log snippets, AWS CLI
+   output, local repository paths, screenshots, vendor payloads, and timestamps.
+3. Use available local repositories for investigation when API integrations are
+   not practical or permitted.
+4. Keep a clear evidence ledger and never claim root cause without citations.
+5. Produce drafts and branches only after explicit instruction; write nothing
+   externally by default.
+
+The `questions` command is the first local helper for this behaviour. It
+generates concrete follow-up questions from incomplete incident data.
