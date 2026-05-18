@@ -32,6 +32,11 @@ Use `docs/transport/bootstrap-prompt.md` to carry this project to a work
 machine through Slack/email. The receiving environment should create local
 `.env` values from `.env.example` and keep real workplace data out of git.
 
+Use `docs/prompts/` as the portable assistant prompt pack for VS Code Copilot,
+Claude Enterprise, or another approved workplace AI assistant. These prompts
+define the Support-Monkey orchestrator, incident council, evidence review, RCA
+drafting, Jira drafting, and redaction-review workflows.
+
 ## Local Offline Demo
 
 ```sh
