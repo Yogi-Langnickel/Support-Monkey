@@ -14,7 +14,7 @@
 ## Evidence Ledger
 
 | Source | Reference | Confidence | Summary |
-| --- | --- | --- | --- |
+| ------ | --------- | ---------- | ------- |
 
 ## Working Hypotheses
 
@@ -23,4 +23,3 @@
 ## Recommended Next Actions
 
 ## Draft Work Notes
-
