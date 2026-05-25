@@ -35,8 +35,18 @@ output, local repository paths, or sanitized excerpts instead.
 ## Evidence Standards
 
 - Every conclusion needs a citation.
+- Evidence ledger entries should follow `docs/evidence-standards.md` with ID,
+  type, strength, confidence, supported evidence classes, and ISO 8601
+  timestamps when available.
+- Distinguish hard evidence such as logs, metrics, traces, deployment records,
+  repository diffs, and vendor payloads from soft evidence such as tickets,
+  chat, email, screenshots, and verbal reports.
 - Every root-cause claim needs direct evidence.
+- A `confirmed` claim requires two independent hard evidence sources, or one
+  authoritative hard source plus validation evidence.
 - Every workaround needs a validation step.
+- Validation should use a named pattern: `synthetic`, `log_based`,
+  `metric_based`, `deployment_based`, or `user_based`.
 - Every product handoff needs reproduction, impact, and acceptance criteria.
 - Every vendor escalation needs contract/interface evidence.
 - Every Problem Record candidate needs linked incidents, recurrence evidence,
@@ -69,3 +79,6 @@ If any class is missing, the assistant keeps asking targeted questions. If a
 class cannot be collected because of missing access, credentials, logs,
 ownership, vendor response, or policy, the output must name that exact blocker
 instead of pretending the investigation is complete.
+
+If all classes are present but the ledger is soft-only, the output must flag the
+RCA or closure as high risk and ask for hard technical evidence.

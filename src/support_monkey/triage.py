@@ -1,14 +1,18 @@
 from __future__ import annotations
 
-from .models import Incident, TriagePack
+from .models import Evidence, Incident, TriagePack
 from .questions import generate_clarification_questions
 
 
 def build_triage_pack(incident: Incident) -> TriagePack:
     systems = ", ".join(incident.affected_systems) if incident.affected_systems else "unknown"
+    impact_detail = ""
+    if incident.impact.scope != "unknown" or incident.impact.depth != "unknown":
+        impact_detail = f" Structured impact: scope={incident.impact.scope}, depth={incident.impact.depth}."
     impact = (
         f"Priority {incident.priority}; affected systems: {systems}. "
         "Impact must be confirmed from monitoring, logs, and ticket evidence."
+        f"{impact_detail}"
     )
     hypotheses = _initial_hypotheses(incident)
     required_evidence = (
@@ -53,12 +57,21 @@ def _initial_hypotheses(incident: Incident) -> tuple[str, ...]:
 
 def render_markdown(pack: TriagePack) -> str:
     incident = pack.incident
-    evidence_rows = "\n".join(
-        f"| {item.source} | {item.reference} | {item.confidence} | {item.summary} |"
-        for item in incident.evidence
-    )
+    evidence_rows = "\n".join(_evidence_row(item) for item in incident.evidence)
     if not evidence_rows:
-        evidence_rows = "| pending | pending | unverified | No evidence collected yet. |"
+        evidence_rows = "| pending | pending | pending | pending | pending | unverified | pending | No evidence collected yet. |"
+    timeline_rows = "\n".join(
+        f"| {item.occurred_at or 'unknown'} | {item.summary} | {item.evidence_id or 'pending'} |"
+        for item in incident.timeline
+    )
+    if not timeline_rows:
+        timeline_rows = "| pending | pending | pending |"
+    impact_evidence = ", ".join(incident.impact.evidence_ids) if incident.impact.evidence_ids else "pending"
+    impact_users = (
+        incident.impact.affected_users_estimate
+        if incident.impact.affected_users_estimate is not None
+        else "unknown"
+    )
 
     sections = [
         f"# Incident Triage Pack: {incident.number}",
@@ -75,9 +88,20 @@ def render_markdown(pack: TriagePack) -> str:
         pack.impact_summary,
         "",
         "## Evidence Ledger",
-        "| Source | Reference | Confidence | Summary |",
-        "| --- | --- | --- | --- |",
+        "| ID | Source | Type | Strength | Reference | Confidence | Supports | Summary |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
         evidence_rows,
+        "",
+        "## Timeline",
+        "| Timestamp | Event | Evidence ID |",
+        "| --- | --- | --- |",
+        timeline_rows,
+        "",
+        "## Impact",
+        f"- Scope: {incident.impact.scope}",
+        f"- Depth: {incident.impact.depth}",
+        f"- Affected users estimate: {impact_users}",
+        f"- Evidence IDs: {impact_evidence}",
         "",
         "## Working Hypotheses",
         *_bullet_list(pack.hypotheses),
@@ -102,3 +126,12 @@ def render_markdown(pack: TriagePack) -> str:
 
 def _bullet_list(items: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(f"- {item}" for item in items)
+
+
+def _evidence_row(item: Evidence) -> str:
+    supports = ", ".join(item.supports) or "pending"
+    return (
+        f"| {item.evidence_id} | {item.source} | {item.evidence_type} | "
+        f"{item.strength} | {item.reference} | {item.confidence} | "
+        f"{supports} | {item.summary} |"
+    )

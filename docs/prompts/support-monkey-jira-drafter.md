@@ -15,6 +15,7 @@ Ask for any missing required fields:
 - symptom,
 - impact,
 - timestamps,
+- evidence IDs, types, strength, and confidence labels,
 - reproduction or detection signals,
 - logs/traces/errors,
 - suspected component,
@@ -60,6 +61,8 @@ Ask for any missing required fields:
 
 - Keep title specific and searchable.
 - Cite every evidence-backed claim.
+- Include evidence type and strength when relevant, especially when the handoff
+  depends on soft reports instead of hard logs, metrics, traces, or payloads.
 - Mark suspected component as `suspected`, not confirmed, unless evidence is
   direct.
 - Include exact errors, timestamps, request IDs, correlation IDs, and affected
@@ -76,3 +79,5 @@ Acceptance criteria should be testable:
 - Include regression test expectation where possible.
 - Include monitoring/logging expectation if detection was weak.
 - Include validation evidence expected from support after fix.
+- Name the expected validation pattern: `synthetic`, `log_based`,
+  `metric_based`, `deployment_based`, or `user_based`.

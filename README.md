@@ -41,6 +41,10 @@ Claude Enterprise, or another approved workplace AI assistant. These prompts
 define the Support-Monkey orchestrator, incident council, evidence review, RCA
 drafting, Jira drafting, and redaction-review workflows.
 
+Use `docs/evidence-standards.md` for the formal evidence taxonomy, confidence
+labels, timeline format, impact buckets, and validation patterns used by the
+resolution gate.
+
 ## Local Offline Demo
 
 ```sh
@@ -51,6 +55,12 @@ python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
 
 The command reads a sanitized incident JSON file and emits a Markdown triage
 pack to stdout.
+
+## Local Validation
+
+```sh
+PYTHONPATH=src python3 -m unittest discover -s tests -p 'test*.py'
+```
 
 ## Orchestrator Behaviour
 
@@ -72,6 +82,8 @@ generates concrete follow-up questions from incomplete incident data.
 The `resolution-gate` command is the conservative closure guard. It reports
 which evidence classes are still missing before Support-Monkey may claim root
 cause, impact, workaround, fix validation, vendor fault, or Jira-ready handoff.
+It also reports a data quality score so soft-only investigations are flagged as
+high risk even when all required fields appear to be filled.
 
 API integrations are optional, not assumed. If ServiceNow, Confluence, AWS,
 NewRelic, Jira, or repository APIs are blocked by policy or access, use local

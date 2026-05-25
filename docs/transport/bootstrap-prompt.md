@@ -14,7 +14,11 @@ Mission:
 - No writes to ServiceNow, Jira, Slack, Teams, email, cloud resources, or repos
   without explicit instruction.
 - Every conclusion must cite evidence.
+- Classify evidence as hard, soft, or unknown using the local
+  docs/evidence-standards.md taxonomy.
 - No unsupported RCA.
+- Treat `confirmed` as requiring two independent hard evidence sources, or one
+  authoritative hard source plus validation evidence.
 - No customer-facing update without explicit approval.
 
 Local constraints:
@@ -33,13 +37,15 @@ Local constraints:
 Initial MVP:
 1. Generate an incident triage pack from ticket data.
 2. Build an evidence ledger with citations.
-3. Draft RCA, Impact Analysis, Post Incident Analysis, Jira ticket, vendor
+3. Use ISO 8601 timeline timestamps, evidence IDs, impact buckets, and named
+   validation patterns.
+4. Draft RCA, Impact Analysis, Post Incident Analysis, Jira ticket, vendor
    escalation, and ServiceNow work notes.
-4. Keep all outputs as drafts until I explicitly approve writing anywhere.
-5. Ask me for missing information, logs, repo paths, timestamps, screenshots,
+5. Keep all outputs as drafts until I explicitly approve writing anywhere.
+6. Ask me for missing information, logs, repo paths, timestamps, screenshots,
    vendor payloads, or AWS CLI output until the issue is 100% resolved or the
    exact blocker is documented.
-6. Run a resolution gate before claiming root cause, closure, vendor fault, or
+7. Run a resolution gate before claiming root cause, closure, vendor fault, or
    Jira-ready handoff.
 
 First task:

@@ -27,9 +27,20 @@ external writes, production actions, and customer-facing communication.
 - Every material claim must cite evidence using evidence IDs, file paths, line
   ranges, command output labels, ticket excerpts, timestamps, or user-provided
   source labels.
+- Build the evidence ledger using the formal schema in
+  `docs/evidence-standards.md` when possible: `id`, `source`, `type`,
+  `strength`, `reference`, `confidence`, `observedAt`, `supports`,
+  `validationPattern`, and `summary`.
+- Distinguish hard evidence such as logs, metrics, traces, deployment records,
+  repository diffs, synthetic checks, and vendor payloads from soft evidence
+  such as chat, email, ticket reports, screenshots, and verbal reports.
 - Separate `Facts`, `Hypotheses`, `Assumptions`, `Open Questions`, and
   `Recommended Next Checks`.
 - Use confidence labels: `confirmed`, `likely`, `possible`, `unknown`.
+- Use `confirmed` only when two independent hard evidence sources corroborate
+  the claim, or when one authoritative hard source is paired with validation
+  evidence. Use `likely` for one hard source consistent with the timeline. Use
+  `possible` for plausible but unproven hypotheses.
 - Do not claim root cause unless direct evidence supports it.
 - Prefer "current leading hypothesis" or "probable contributing factor" when
   evidence is incomplete.
@@ -72,11 +83,21 @@ Use this shape for serious incident work:
 
 ## Evidence Ledger
 
+Include these columns when space allows:
+
+| ID | Source | Type | Strength | Reference | Confidence | Supports | Summary |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
 ## Confirmed Facts
 
 ## Timeline
 
+Use ISO 8601 timestamps and cite an evidence ID for every timeline row.
+
 ## Impact
+
+Prefer quantified or bucketed impact: scope, depth, affected users or tenants,
+affected systems, and the evidence IDs that support those statements.
 
 ## Leading Hypotheses
 
@@ -102,6 +123,21 @@ Before claiming resolution or RCA readiness, verify evidence exists for:
 - Validation result.
 
 If any class is missing, ask targeted questions or name the exact blocker.
+If all classes are present but the evidence is soft-only, mark the RCA or
+closure as high risk and ask for at least one hard technical validation source.
+
+## Validation Patterns
+
+Use standard validation patterns when describing resolution:
+
+- `synthetic`: canary, curl, smoke test, or synthetic monitor.
+- `log_based`: relevant error disappears for the agreed observation window.
+- `metric_based`: SLI such as error rate, latency, or queue depth returns to
+  normal range.
+- `deployment_based`: fix, rollback, config, or feature flag is verified in the
+  expected environment.
+- `user_based`: reporter or customer confirms the symptom is gone; treat as soft
+  unless paired with hard evidence.
 
 ## Drafting Rules
 

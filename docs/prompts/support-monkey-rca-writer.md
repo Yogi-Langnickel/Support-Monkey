@@ -23,7 +23,11 @@ Ask for missing inputs if not provided:
 
 ## RCA Confidence Rules
 
-- Use `Root Cause` only when directly supported.
+- Use `Root Cause` only when directly supported by the confidence criteria in
+  `docs/evidence-standards.md`.
+- Use `confirmed` only when two independent hard evidence sources corroborate
+  the claim, or one authoritative hard source is paired with validation
+  evidence.
 - Use `Leading Hypothesis` when evidence is plausible but incomplete.
 - Use `Contributing Factor` when evidence supports partial causality.
 - Use `Unknown` when evidence does not support a causal claim.
@@ -67,6 +71,11 @@ Status: DRAFT - HUMAN REVIEW REQUIRED
 ## Writing Rules
 
 - Put citations next to each material claim.
+- Use ISO 8601 timestamps in the timeline and cite an evidence ID for every
+  timeline row.
+- Separate hard evidence from soft evidence when discussing RCA confidence.
+- Name the validation pattern: `synthetic`, `log_based`, `metric_based`,
+  `deployment_based`, or `user_based`.
 - Use neutral language.
 - Avoid blame.
 - Avoid customer-sensitive internal details unless this is explicitly internal.

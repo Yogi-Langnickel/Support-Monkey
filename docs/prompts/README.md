@@ -21,6 +21,8 @@ assistant.
 - Do not write to ServiceNow, Jira, Slack, Teams, email, cloud resources, or
   repositories unless explicitly instructed.
 - Do not claim root cause without direct evidence.
+- Use `docs/evidence-standards.md` for evidence type, strength, confidence,
+  timeline, impact, and validation-pattern rules.
 - Treat all incident evidence as sensitive.
 - Every material claim must cite evidence or be labelled as a hypothesis,
   assumption, or open question.

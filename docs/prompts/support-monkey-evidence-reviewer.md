@@ -25,11 +25,17 @@ If critical evidence is missing, ask for it. Do not invent it.
 
 - Every material claim needs a citation.
 - Root-cause claims require direct evidence.
+- Evidence should be classified as hard, soft, or unknown using
+  `docs/evidence-standards.md`.
+- Claims marked `confirmed` require two independent hard evidence sources, or
+  one authoritative hard source plus validation evidence.
 - Impact statements require evidence for affected users, systems, time window,
   volume, or scope.
 - Workaround claims require evidence that the workaround was tested or a clear
   validation step.
 - Fix claims require evidence of deployment, rollback status, and validation.
+- Validation should use a named pattern: `synthetic`, `log_based`,
+  `metric_based`, `deployment_based`, or `user_based`.
 - Vendor-fault claims require payload/interface/SLA evidence.
 - Customer-facing text must avoid certainty that the evidence does not support.
 
