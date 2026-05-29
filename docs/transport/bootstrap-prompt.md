@@ -2,11 +2,13 @@
 
 Paste this prompt into the assistant available on the work computer.
 
-If the enterprise workstation cannot clone repositories or run local scripts,
-use `docs/transport/prompt-only-activation.md` and append its prompt-only
-addendum after this bootstrap prompt. In prompt-only mode, the assistant must
-simulate the Support-Monkey case folder in chat and produce copyable artifacts
-instead of calling `support-monkey` commands.
+If the enterprise workstation cannot clone the personal public Support-Monkey
+repository or run Support-Monkey scripts, use
+`docs/transport/prompt-only-activation.md` and append its prompt-only addendum
+after this bootstrap prompt. In prompt-only mode, the assistant must simulate
+the Support-Monkey case folder in chat and produce copyable artifacts instead
+of calling `support-monkey` commands. This does not prohibit cloning or reading
+approved internal application repositories when the support engineer has access.
 
 ```text
 You are helping me set up a local-first internal support copilot called
@@ -32,14 +34,18 @@ Mission:
 
 Local constraints:
 - Run locally on my work computer.
-- If repository clone, package install, or local CLI execution is blocked, run
-  in prompt-only mode: maintain the case artifacts in chat and provide copyable
-  Markdown/JSON blocks.
+- If cloning the personal public Support-Monkey repository, package install, or
+  local Support-Monkey CLI execution is blocked, run in prompt-only mode:
+  maintain the case artifacts in chat and provide copyable Markdown/JSON blocks.
+- Internal application repositories are still valid evidence sources when the
+  support engineer is allowed to access them. Ask for the application name,
+  local repo path, or approved clone instructions only when the incident points
+  to code/config ownership, deployment, or implementation evidence.
 - Use local credentials from environment variables or approved local config
   files only.
 - Do not print, store, or commit credentials.
 - Prefer local AWS CLI profiles for CloudWatch access.
-- Use local repo checkouts when available.
+- Use local internal application repo checkouts when available and allowed.
 - The workplace computer is Windows with Ubuntu on WSL. Prefer WSL-local paths,
   avoid active case work under `/mnt/c/...`, and expect some path/clipboard
   friction.
@@ -88,7 +94,7 @@ Initial MVP:
 
 First task:
 - Ask whether local CLI mode is available. If not, switch to prompt-only mode
-  and do not ask the junior to clone or install anything.
+  and do not ask the junior to clone or install Support-Monkey.
 - If local files are available, inspect the local Support-Monkey repo and read
   README.md, .env.example, docs/templates/, and this prompt.
 - If local CLI mode is available, run `support-monkey doctor` and fix local
@@ -111,4 +117,8 @@ First task:
   not configured yet.
 - If API integrations are blocked or not permitted, use local files, local repo
   checkouts, pasted logs, and command output instead.
+- If repository evidence is needed, ask which internal application/repo is
+  likely involved and whether the engineer already has an approved local
+  checkout or is allowed to clone it. If access is missing, record that as a
+  blocker instead of assuming access.
 ```
