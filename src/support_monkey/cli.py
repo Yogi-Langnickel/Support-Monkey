@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 import sys
 
-from .cases import create_incident_case, render_case_next_action
+from .cases import capture_learning_candidate, create_incident_case, render_case_next_action
 from .models import Incident
 from .questions import render_questions_markdown
 from .resolution import render_resolution_gate_markdown
@@ -37,6 +37,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     next_parser.add_argument("case", type=Path)
 
+    learn_parser = subparsers.add_parser(
+        "capture-learning",
+        help="Create a human-reviewed learning candidate from a case folder.",
+    )
+    learn_parser.add_argument("case", type=Path)
+    learn_parser.add_argument(
+        "--learnings-dir",
+        type=Path,
+        default=Path(".support-monkey/learnings/pending"),
+        help="Directory for pending learning candidates.",
+    )
+
     questions_parser = subparsers.add_parser(
         "questions",
         help="Generate clarification questions from incomplete incident JSON.",
@@ -56,6 +68,8 @@ def main(argv: list[str] | None = None) -> int:
         return _new_incident(args.incident_number, cases_dir=args.cases_dir)
     if args.command == "next":
         return _next(args.case)
+    if args.command == "capture-learning":
+        return _capture_learning(args.case, learnings_dir=args.learnings_dir)
     if args.command == "questions":
         return _questions(args.incident_json)
     if args.command == "resolution-gate":
@@ -105,6 +119,17 @@ def _next(case_path: Path) -> int:
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
+    return 0
+
+
+def _capture_learning(case_path: Path, *, learnings_dir: Path) -> int:
+    try:
+        result = capture_learning_candidate(case_path, learnings_dir=learnings_dir)
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    print(f"Created pending learning candidate for {result.incident_number}: {result.learning_path}")
+    print("Review before promoting to durable memory.")
     return 0
 
 

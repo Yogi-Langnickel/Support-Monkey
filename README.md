@@ -50,6 +50,7 @@ resolution gate.
 ```sh
 python3 -m support_monkey.cli new-incident INC0012345
 python3 -m support_monkey.cli next cases/INC0012345
+python3 -m support_monkey.cli capture-learning cases/INC0012345
 python3 -m support_monkey.cli triage examples/incident.sample.json
 python3 -m support_monkey.cli questions examples/incident.sample.json
 python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
@@ -60,6 +61,11 @@ with ServiceNow-copyable worknotes, evidence ledger, timeline, impact,
 hypothesis, RCA, branch-plan, command, Problem Record, and final-summary files.
 `next` reads the case and gives the junior engineer one small investigation
 action with guardrails and a copy-ready worknote stub.
+
+`capture-learning` writes a pending learning candidate under
+`.support-monkey/learnings/pending/`. Treat it as an inbox only: a senior must
+review evidence, remove sensitive details, and approve promotion before it
+becomes durable memory.
 
 The older `triage`, `questions`, and `resolution-gate` commands read a
 sanitized incident JSON file and emit Markdown to stdout.
@@ -98,6 +104,10 @@ They intentionally keep the process manual and local: the junior pastes
 ServiceNow details, log outputs, query results, screenshots, and local repo
 findings into the case folder. API integrations should come after this workflow
 is reliable under incident pressure.
+
+`capture-learning` is the first learning loop. It creates a reviewed-learning
+candidate from a case folder without auto-updating memory, because early
+incident notes can contain wrong assumptions or sensitive data.
 
 API integrations are optional, not assumed. If ServiceNow, Confluence, AWS,
 NewRelic, Jira, or repository APIs are blocked by policy or access, use local
