@@ -31,6 +31,10 @@ MVP is read-only and local-first.
 Use `docs/transport/bootstrap-prompt.md` to carry this project to a work
 machine through Slack/email. The receiving environment should create local
 `.env` values from `.env.example` and keep real workplace data out of git.
+If enterprise controls block cloning, package install, or local script
+execution, use `docs/transport/prompt-only-activation.md`; Support-Monkey then
+runs as a prompt-activated assistant that maintains copyable case artifacts in
+chat.
 
 For the expected Windows workstation setup, use
 `docs/setup/windows-wsl.md`. The recommended control center is VS Code with the
