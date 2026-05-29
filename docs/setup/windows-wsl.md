@@ -44,6 +44,11 @@ git --version
 
 ## First Setup
 
+Enterprise controls may block cloning this repository, installing packages, or
+running local scripts. If that happens, skip this section and use
+`docs/transport/prompt-only-activation.md` by copying its activation text into
+the approved AI assistant.
+
 Clone the repository inside WSL:
 
 ```sh

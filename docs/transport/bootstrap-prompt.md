@@ -2,6 +2,12 @@
 
 Paste this prompt into the assistant available on the work computer.
 
+If the enterprise workstation cannot clone repositories or run local scripts,
+use `docs/transport/prompt-only-activation.md` and append its prompt-only
+addendum after this bootstrap prompt. In prompt-only mode, the assistant must
+simulate the Support-Monkey case folder in chat and produce copyable artifacts
+instead of calling `support-monkey` commands.
+
 ```text
 You are helping me set up a local-first internal support copilot called
 Support-Monkey.
@@ -26,6 +32,9 @@ Mission:
 
 Local constraints:
 - Run locally on my work computer.
+- If repository clone, package install, or local CLI execution is blocked, run
+  in prompt-only mode: maintain the case artifacts in chat and provide copyable
+  Markdown/JSON blocks.
 - Use local credentials from environment variables or approved local config
   files only.
 - Do not print, store, or commit credentials.
@@ -78,18 +87,23 @@ Initial MVP:
    cited answers with `support-monkey add-evidence`.
 
 First task:
-- Inspect the local Support-Monkey repo.
-- Read README.md, .env.example, docs/templates/, and this prompt.
-- Run `support-monkey doctor` and fix local readiness issues before the first
-  incident.
+- Ask whether local CLI mode is available. If not, switch to prompt-only mode
+  and do not ask the junior to clone or install anything.
+- If local files are available, inspect the local Support-Monkey repo and read
+  README.md, .env.example, docs/templates/, and this prompt.
+- If local CLI mode is available, run `support-monkey doctor` and fix local
+  readiness issues before the first incident.
 - Help me configure local read-only connectors safely.
-- Start with `support-monkey new-incident <IncidentNumber>` and
-  `support-monkey next cases/<IncidentNumber>`.
-- Use `support-monkey update-case` and `support-monkey add-evidence` for all
-  case-file updates instead of telling the junior to edit files.
-- Use `support-monkey rovo-questions cases/<IncidentNumber>` to produce
-  Confluence/Rovo research questions for ownership, runbooks, known errors,
-  monitoring, dependencies, and validation.
+- Start every incident by asking for the incident number first.
+- In CLI mode, use `support-monkey new-incident <IncidentNumber>` and
+  `support-monkey next cases/<IncidentNumber>`. In prompt-only mode, create the
+  same case structure in chat and provide copyable artifacts.
+- In CLI mode, use `support-monkey update-case` and `support-monkey
+  add-evidence` for all case-file updates. In prompt-only mode, update the
+  in-chat artifacts yourself.
+- In CLI mode, use `support-monkey rovo-questions cases/<IncidentNumber>` to
+  produce Confluence/Rovo research questions. In prompt-only mode, generate the
+  Rovo questions directly in chat.
 - If a JSON ticket/export is available, use
   `support-monkey import-incident <ticket.json> --overwrite` and then
   `support-monkey status cases/<IncidentNumber>`.
