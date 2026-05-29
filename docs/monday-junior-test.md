@@ -42,6 +42,7 @@ Import the mock into a case:
 ```sh
 PYTHONPATH=src python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
 PYTHONPATH=src python3 -m support_monkey.cli status cases/INC-MONDAY-001
+PYTHONPATH=src python3 -m support_monkey.cli rovo-questions cases/INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli next cases/INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli resolution-gate cases/INC-MONDAY-001/incident.json
 ```
@@ -53,6 +54,8 @@ Expected result:
   validation depending on what the tester filled in.
 - `status` should show file health, evidence count, evidence quality, missing
   evidence classes, and the recommended next action.
+- `rovo-questions` should produce copy-ready Confluence/Rovo questions for
+  runbooks, ownership, known errors, monitoring, dependencies, and validation.
 
 ## Assistant-Owned Case Updates
 
@@ -101,6 +104,9 @@ Expected result:
   where the junior should copy the screenshot, log export, or query result.
 - The junior only copies external artifacts into the instructed folder. They do
   not edit case files.
+- Support engineers should not be asked to contact customers directly. Use
+  ServiceNow, call-centre notes, monitoring, Confluence/Rovo, Teams, and
+  internal systems for evidence.
 
 ## Junior Observation Checklist
 

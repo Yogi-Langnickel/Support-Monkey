@@ -45,6 +45,10 @@ Use `docs/evidence-standards.md` for the formal evidence taxonomy, confidence
 labels, timeline format, impact buckets, and validation patterns used by the
 resolution gate.
 
+Use `docs/integrations/confluence-rovo.md` for the staged Confluence/Rovo path:
+generated Rovo questions first, Confluence REST/API-token search later, and
+Forge/Rovo/MCP integration only after the manual pilot proves useful.
+
 ## Local Offline Demo
 
 ```sh
@@ -52,6 +56,7 @@ python3 -m support_monkey.cli doctor
 python3 -m support_monkey.cli new-incident INC0012345
 python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
 python3 -m support_monkey.cli status cases/INC-MONDAY-001
+python3 -m support_monkey.cli rovo-questions cases/INC-MONDAY-001
 python3 -m support_monkey.cli update-case cases/INC-MONDAY-001 --priority P2 --affected-system customer-portal
 python3 -m support_monkey.cli add-evidence cases/INC-MONDAY-001 --source ServiceNow --type ticket --strength soft --summary "Ticket reports intermittent 502 errors." --supports symptom
 python3 -m support_monkey.cli next cases/INC0012345
@@ -75,6 +80,10 @@ action with guardrails and a copy-ready worknote stub.
 collects answers from the junior, updates the case files, refreshes derived
 Markdown, and prints exact artifact-copy instructions when screenshots or log
 exports need to be placed in the incident folder.
+`rovo-questions` generates copy-ready questions for Rovo/Confluence research so
+the assistant can look for ownership, runbooks, known errors, monitoring,
+dependencies, workarounds, and validation guidance without asking juniors to
+manually search across Confluence.
 
 `capture-learning` writes a pending learning candidate under
 `.support-monkey/learnings/pending/`. Treat it as an inbox only: a senior must
@@ -100,8 +109,11 @@ Support-Monkey should behave like a persistent incident orchestrator:
    output, local repository paths, screenshots, vendor payloads, and timestamps.
 3. Use available local repositories for investigation when API integrations are
    not practical or permitted.
-4. Keep a clear evidence ledger and never claim root cause without citations.
-5. Produce drafts and branches only after explicit instruction; write nothing
+4. Assume support engineers usually do not have direct customer access; use
+   ServiceNow, call-centre notes, monitoring, logs, Confluence/Rovo, Teams, and
+   internal systems as evidence sources.
+5. Keep a clear evidence ledger and never claim root cause without citations.
+6. Produce drafts and branches only after explicit instruction; write nothing
    externally by default.
 
 The `questions` command is the first local helper for this behaviour. It

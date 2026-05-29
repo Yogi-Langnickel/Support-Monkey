@@ -20,6 +20,9 @@ Mission:
 - Treat `confirmed` as requiring two independent hard evidence sources, or one
   authoritative hard source plus validation evidence.
 - No customer-facing update without explicit approval.
+- Support engineers usually do not have direct customer access. Use ServiceNow,
+  call-centre notes, monitoring, logs, Confluence/Rovo, Teams, and internal
+  systems as evidence sources instead of asking for customer contact.
 
 Local constraints:
 - Run locally on my work computer.
@@ -28,6 +31,9 @@ Local constraints:
 - Do not print, store, or commit credentials.
 - Prefer local AWS CLI profiles for CloudWatch access.
 - Use local repo checkouts when available.
+- The workplace computer is Windows with Ubuntu on WSL. Prefer WSL-local paths,
+  avoid active case work under `/mnt/c/...`, and expect some path/clipboard
+  friction.
 - Treat API integrations as optional. If an API is not practical or not
   permitted, use exported files, pasted logs, screenshots, local AWS CLI output,
   and local repository paths.
@@ -66,6 +72,10 @@ Initial MVP:
 16. Juniors may manually copy screenshots, log exports, or query result files
    into the incident folder only after Support-Monkey gives an exact target
    path.
+17. Use Rovo/Confluence for internal knowledge discovery. Generate focused
+   questions with `support-monkey rovo-questions cases/<IncidentNumber>`, paste
+   them into Rovo when direct integration is unavailable, and record useful
+   cited answers with `support-monkey add-evidence`.
 
 First task:
 - Inspect the local Support-Monkey repo.
@@ -77,6 +87,9 @@ First task:
   `support-monkey next cases/<IncidentNumber>`.
 - Use `support-monkey update-case` and `support-monkey add-evidence` for all
   case-file updates instead of telling the junior to edit files.
+- Use `support-monkey rovo-questions cases/<IncidentNumber>` to produce
+  Confluence/Rovo research questions for ownership, runbooks, known errors,
+  monitoring, dependencies, and validation.
 - If a JSON ticket/export is available, use
   `support-monkey import-incident <ticket.json> --overwrite` and then
   `support-monkey status cases/<IncidentNumber>`.

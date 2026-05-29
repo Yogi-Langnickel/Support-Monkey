@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import platform
 import sys
 
 
@@ -50,6 +51,7 @@ def run_doctor_checks(*, cases_dir: Path = Path("cases"), project_root: Path = P
     root = project_root.resolve()
     checks = [
         _python_check(),
+        _runtime_location_check(root),
         _file_check(root / "pyproject.toml", "project metadata"),
         _json_file_check(root / "examples" / "monday-test-incident.json", "Monday mock incident"),
         _file_check(root / "docs" / "monday-junior-test.md", "Monday junior test guide"),
@@ -64,6 +66,19 @@ def _python_check() -> DoctorCheck:
     ok = sys.version_info >= (3, 9)
     detail = f"Python {version}" if ok else f"Python {version}; expected 3.9 or newer"
     return DoctorCheck("Python runtime", ok, detail)
+
+
+def _runtime_location_check(root: Path) -> DoctorCheck:
+    system = platform.system()
+    if _running_in_wsl():
+        if str(root).startswith("/mnt/"):
+            return DoctorCheck(
+                "WSL repository location",
+                False,
+                f"{root}; move the repo into the WSL filesystem, for example ~/work/Support-Monkey",
+            )
+        return DoctorCheck("WSL repository location", True, f"WSL filesystem path: {root}")
+    return DoctorCheck("WSL repository location", True, f"{system}; WSL check skipped outside workplace runtime")
 
 
 def _file_check(path: Path, label: str) -> DoctorCheck:
@@ -95,3 +110,11 @@ def _cases_dir_check(path: Path) -> DoctorCheck:
     except OSError as error:
         return DoctorCheck("case directory", False, f"cannot create {path}: {error}")
     return DoctorCheck("case directory", True, str(path))
+
+
+def _running_in_wsl() -> bool:
+    try:
+        version = Path("/proc/version").read_text(encoding="utf-8").lower()
+    except OSError:
+        return False
+    return "microsoft" in version or "wsl" in version
