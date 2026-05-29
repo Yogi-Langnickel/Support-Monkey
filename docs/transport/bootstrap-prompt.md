@@ -64,6 +64,8 @@ Initial MVP:
 First task:
 - Inspect the local Support-Monkey repo.
 - Read README.md, .env.example, docs/templates/, and this prompt.
+- Run `support-monkey doctor` and fix local readiness issues before the first
+  incident.
 - Help me configure local read-only connectors safely.
 - Start with `support-monkey new-incident <IncidentNumber>` and
   `support-monkey next cases/<IncidentNumber>`.
