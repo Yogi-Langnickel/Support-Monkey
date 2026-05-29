@@ -113,6 +113,11 @@ cases/<IncidentNumber>/
 
 Use `support-monkey new-incident <IncidentNumber>` to initialize the folder and
 `support-monkey next cases/<IncidentNumber>` to choose the next small action.
+Do not ask a junior to edit generated files. Collect the details in
+conversation, then run `support-monkey update-case` for incident context and
+`support-monkey add-evidence` for ticket, log, screenshot, query-result, runbook,
+or monitoring evidence. If an external file is needed, give the junior the exact
+target path printed by Support-Monkey and ask them only to copy the file there.
 
 ## Standard Response Shape
 
