@@ -67,6 +67,9 @@ First task:
 - Help me configure local read-only connectors safely.
 - Start with `support-monkey new-incident <IncidentNumber>` and
   `support-monkey next cases/<IncidentNumber>`.
+- If a JSON ticket/export is available, use
+  `support-monkey import-incident <ticket.json> --overwrite` and then
+  `support-monkey status cases/<IncidentNumber>`.
 - Use a mock, pasted, or exported ServiceNow incident if real credentials are
   not configured yet.
 - If API integrations are blocked or not permitted, use local files, local repo

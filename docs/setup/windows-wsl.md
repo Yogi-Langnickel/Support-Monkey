@@ -69,6 +69,8 @@ Run the current offline helpers:
 
 ```sh
 support-monkey new-incident INC0012345
+support-monkey import-incident examples/monday-test-incident.json --overwrite
+support-monkey status cases/INC-MONDAY-001
 support-monkey next cases/INC0012345
 support-monkey capture-learning cases/INC0012345
 support-monkey triage examples/incident.sample.json
@@ -80,6 +82,8 @@ If the console script is not installed yet, run with `PYTHONPATH`:
 
 ```sh
 PYTHONPATH=src python3 -m support_monkey.cli new-incident INC0012345
+PYTHONPATH=src python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
+PYTHONPATH=src python3 -m support_monkey.cli status cases/INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli next cases/INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli capture-learning cases/INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli triage examples/incident.sample.json

@@ -5,7 +5,13 @@ import json
 from pathlib import Path
 import sys
 
-from .cases import capture_learning_candidate, create_incident_case, render_case_next_action
+from .cases import (
+    capture_learning_candidate,
+    create_incident_case,
+    import_incident_case,
+    render_case_next_action,
+    render_case_status,
+)
 from .models import Incident
 from .questions import render_questions_markdown
 from .resolution import render_resolution_gate_markdown
@@ -31,11 +37,34 @@ def main(argv: list[str] | None = None) -> int:
         help="Directory where incident case folders are stored.",
     )
 
+    import_parser = subparsers.add_parser(
+        "import-incident",
+        help="Create or update a local case folder from incident JSON.",
+    )
+    import_parser.add_argument("incident_json", type=Path)
+    import_parser.add_argument(
+        "--cases-dir",
+        type=Path,
+        default=Path("cases"),
+        help="Directory where incident case folders are stored.",
+    )
+    import_parser.add_argument(
+        "--overwrite",
+        action="store_true",
+        help="Overwrite generated incident, evidence ledger, and worknotes files.",
+    )
+
     next_parser = subparsers.add_parser(
         "next",
         help="Show the next small investigation step for a case folder.",
     )
     next_parser.add_argument("case", type=Path)
+
+    status_parser = subparsers.add_parser(
+        "status",
+        help="Show concise readiness status for a case folder.",
+    )
+    status_parser.add_argument("case", type=Path)
 
     learn_parser = subparsers.add_parser(
         "capture-learning",
@@ -66,8 +95,16 @@ def main(argv: list[str] | None = None) -> int:
         return _triage(args.incident_json)
     if args.command == "new-incident":
         return _new_incident(args.incident_number, cases_dir=args.cases_dir)
+    if args.command == "import-incident":
+        return _import_incident(
+            args.incident_json,
+            cases_dir=args.cases_dir,
+            overwrite=args.overwrite,
+        )
     if args.command == "next":
         return _next(args.case)
+    if args.command == "status":
+        return _status(args.case)
     if args.command == "capture-learning":
         return _capture_learning(args.case, learnings_dir=args.learnings_dir)
     if args.command == "questions":
@@ -113,9 +150,40 @@ def _new_incident(incident_number: str | None, *, cases_dir: Path) -> int:
     return 0
 
 
+def _import_incident(path: Path, *, cases_dir: Path, overwrite: bool) -> int:
+    payload = _read_json_object(path)
+    if payload is None:
+        return 2
+    try:
+        result = import_incident_case(payload, cases_dir=cases_dir, overwrite=overwrite)
+    except (OSError, ValueError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    print(f"Imported incident {result.incident_number} into: {result.case_dir}")
+    if result.created_files:
+        print(f"Created base files: {len(result.created_files)}")
+    if result.overwritten_files:
+        print("Updated files:")
+        for path in result.overwritten_files:
+            print(f"- {path.relative_to(result.case_dir)}")
+    if result.existing_files and not overwrite:
+        print("Existing files preserved. Use --overwrite to refresh generated files.")
+    print(f"\nNext: support-monkey status {result.case_dir}")
+    return 0
+
+
 def _next(case_path: Path) -> int:
     try:
         print(render_case_next_action(case_path), end="")
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def _status(case_path: Path) -> int:
+    try:
+        print(render_case_status(case_path), end="")
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
@@ -150,6 +218,13 @@ def _resolution_gate(path: Path) -> int:
 
 
 def _read_incident(path: Path) -> Incident | None:
+    payload = _read_json_object(path)
+    if payload is None:
+        return None
+    return Incident.from_dict(payload)
+
+
+def _read_json_object(path: Path) -> dict[str, object] | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
     except OSError as error:
@@ -160,10 +235,9 @@ def _read_incident(path: Path) -> Incident | None:
         return None
 
     if not isinstance(payload, dict):
-        print("error: incident JSON must be an object", file=sys.stderr)
+        print("error: JSON must be an object", file=sys.stderr)
         return None
-
-    return Incident.from_dict(payload)
+    return payload
 
 
 if __name__ == "__main__":

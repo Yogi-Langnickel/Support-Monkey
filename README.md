@@ -49,6 +49,8 @@ resolution gate.
 
 ```sh
 python3 -m support_monkey.cli new-incident INC0012345
+python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
+python3 -m support_monkey.cli status cases/INC-MONDAY-001
 python3 -m support_monkey.cli next cases/INC0012345
 python3 -m support_monkey.cli capture-learning cases/INC0012345
 python3 -m support_monkey.cli triage examples/incident.sample.json
@@ -59,6 +61,9 @@ python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
 `new-incident` creates a guarded local case folder under `cases/<incident>/`
 with ServiceNow-copyable worknotes, evidence ledger, timeline, impact,
 hypothesis, RCA, branch-plan, command, Problem Record, and final-summary files.
+`import-incident` creates or updates a case from a JSON ticket/export, which is
+the quickest path for Monday mock testing. `status` shows file health, evidence
+quality, missing evidence classes, and the recommended next step.
 `next` reads the case and gives the junior engineer one small investigation
 action with guardrails and a copy-ready worknote stub.
 
