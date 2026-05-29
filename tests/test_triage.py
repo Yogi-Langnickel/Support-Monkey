@@ -10,6 +10,7 @@ from support_monkey.cases import (
     create_incident_case,
     import_incident_case,
     render_case_next_action,
+    render_rovo_questions,
     render_case_status,
     update_case_context,
 )
@@ -361,6 +362,30 @@ class TriageTest(unittest.TestCase):
             self.assertEqual(update_result, 0)
             self.assertEqual(evidence_result, 0)
             self.assertIn("Ticket reports portal latency.", (case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
+
+    def test_rovo_questions_target_confluence_without_customer_access(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC210", cases_dir=Path(temp_dir))
+            update_case_context(
+                case.case_dir,
+                priority="P2",
+                short_description="Customer portal 502",
+                affected_systems=("customer-portal", "account-bff"),
+            )
+
+            markdown = render_rovo_questions(case.case_dir)
+
+            self.assertIn("# Rovo / Confluence Questions: INC210", markdown)
+            self.assertIn("customer-portal, account-bff", markdown)
+            self.assertIn("do not have direct customer access", markdown)
+            self.assertIn("page titles and links", markdown)
+            self.assertIn("support-monkey add-evidence", markdown)
+
+    def test_cli_rovo_questions_runs_for_case(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC211", cases_dir=Path(temp_dir))
+
+            self.assertEqual(main(["rovo-questions", str(case.case_dir)]), 0)
 
     def test_build_triage_pack_cites_ticket_evidence_and_timeout_hypothesis(self) -> None:
         incident = Incident.from_dict(

@@ -195,6 +195,94 @@ def render_case_status(case_path: Path) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def render_rovo_questions(case_path: Path) -> str:
+    case_dir = _resolve_case_dir(case_path)
+    incident = _read_case_incident(case_dir)
+    state, missing = classify_resolution_state(incident)
+    affected = ", ".join(incident.affected_systems) if incident.affected_systems else "unknown"
+    missing_text = ", ".join(missing) if missing else "none"
+    evidence_summaries = tuple(item.summary for item in incident.evidence[:3])
+    evidence_text = "; ".join(evidence_summaries) if evidence_summaries else "no evidence recorded yet"
+    systems = tuple(incident.affected_systems) or ("the affected service",)
+
+    questions = [
+        (
+            "Find current runbooks, ownership pages, service catalog entries, or architecture pages for "
+            f"{', '.join(systems)}. Return page titles, links, owning team, and any confidence caveats."
+        ),
+        (
+            f"For incident {incident.number}, symptom: {incident.short_description or 'unknown'}, affected systems: {affected}. "
+            "Find known incidents, known errors, post-incident reviews, or Problem Records with similar symptoms."
+        ),
+        (
+            f"Search Confluence for operational procedures related to {', '.join(systems)}: rollback, workaround, cache clear, "
+            "Rundeck job, Jenkins job, feature flag, or vendor escalation. Return only read-only investigation steps unless a page clearly labels an approved procedure."
+        ),
+        (
+            f"Find monitoring guidance for {', '.join(systems)}: CloudWatch log groups, NewRelic app names, dashboards, SLOs, alerts, "
+            "and the fields/tags needed to query the incident window."
+        ),
+        (
+            "Find dependency documentation for the affected user journey: upstream/downstream services, queues, databases, vendors, "
+            "Drupal/embedded apps, reverse proxies, BFF/experience layers, and lambdas."
+        ),
+    ]
+    if "owner" in missing:
+        owner_target = affected if incident.affected_systems else "the suspected affected service or user journey"
+        questions.insert(
+            0,
+            f"Who owns {owner_target}? Search Confluence for team ownership, Teams channel, escalation path, repository names, and on-call handoff notes.",
+        )
+    if "resolution path" in missing:
+        questions.append(
+            "Find documented workaround or mitigation options for this symptom. Include exact page links and call out anything requiring senior approval."
+        )
+    if "validation" in missing:
+        questions.append(
+            "Find validation guidance for this service: synthetic checks, log-based validation, metric-based validation, deployment validation, or user-based confirmation alternatives."
+        )
+
+    lines = [
+        f"# Rovo / Confluence Questions: {incident.number}",
+        "",
+        f"Case folder: `{case_dir}`",
+        f"Resolution gate: `{state}`",
+        f"Missing evidence classes: {missing_text}",
+        "",
+        "Use these with Rovo in Confluence/Jira. Support engineers usually do not have direct customer access, so ask for internal evidence sources: ServiceNow notes, runbooks, monitoring, ownership docs, incident history, and support channels.",
+        "",
+        "## Copy Into Rovo",
+    ]
+    for index, question in enumerate(questions, start=1):
+        lines.extend(
+            (
+                "",
+                f"### Question {index}",
+                "```text",
+                "You are helping with an internal support incident. Do not invent facts. Cite Confluence/Jira page titles and links. "
+                "If information is missing or stale, say so.\n\n"
+                f"Incident: {incident.number}\n"
+                f"Priority: {incident.priority}\n"
+                f"Opened: {incident.opened_at or 'unknown'}\n"
+                f"Symptom: {incident.short_description or 'unknown'}\n"
+                f"Affected systems: {affected}\n"
+                f"Known evidence: {evidence_text}\n\n"
+                f"Task: {question}",
+                "```",
+            )
+        )
+    lines.extend(
+        (
+            "",
+            "## After Rovo Answers",
+            "- Ask the assistant to record useful findings with `support-monkey add-evidence`.",
+            "- Treat Rovo answers as soft evidence until backed by a cited page, monitoring output, repo evidence, or runbook excerpt.",
+            "- Do not ask the junior to edit case files manually.",
+        )
+    )
+    return "\n".join(lines).strip() + "\n"
+
+
 def update_case_context(
     case_path: Path,
     *,

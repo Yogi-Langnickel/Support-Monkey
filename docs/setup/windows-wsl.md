@@ -17,6 +17,11 @@ Avoid keeping the active repository under `/mnt/c/...` unless there is a strong
 reason. WSL-local files are usually faster for Python, search, and large log
 handling.
 
+The workplace setup is Windows plus Ubuntu on WSL, so expect occasional path,
+clipboard, browser, line-ending, and file-permission friction. Run
+`support-monkey doctor` first; it warns if the repo is under a Windows-mounted
+path such as `/mnt/c/...`.
+
 ## Prerequisites
 
 Install or confirm:
@@ -26,6 +31,9 @@ Install or confirm:
 - VS Code Remote - WSL extension.
 - Python 3.9 or newer inside WSL.
 - Git inside WSL.
+- Access to Rovo in Confluence/Jira if internal knowledge search is part of the
+  pilot. Direct API integration is optional; see
+  `docs/integrations/confluence-rovo.md`.
 
 Check versions from the WSL terminal:
 
@@ -72,6 +80,7 @@ support-monkey doctor
 support-monkey new-incident INC0012345
 support-monkey import-incident examples/monday-test-incident.json --overwrite
 support-monkey status cases/INC-MONDAY-001
+support-monkey rovo-questions cases/INC-MONDAY-001
 support-monkey next cases/INC0012345
 support-monkey capture-learning cases/INC0012345
 support-monkey triage examples/incident.sample.json
@@ -86,6 +95,7 @@ PYTHONPATH=src python3 -m support_monkey.cli doctor
 PYTHONPATH=src python3 -m support_monkey.cli new-incident INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
 PYTHONPATH=src python3 -m support_monkey.cli status cases/INC-MONDAY-001
+PYTHONPATH=src python3 -m support_monkey.cli rovo-questions cases/INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli next cases/INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli capture-learning cases/INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli triage examples/incident.sample.json
@@ -121,10 +131,13 @@ Recommended workflow:
 5. Run Support-Monkey commands from the VS Code integrated terminal.
 6. Copy screenshots, log exports, and query result files only into the exact
    evidence path printed by Support-Monkey.
-7. Review Markdown drafts in VS Code preview.
-8. Capture pending learnings with `support-monkey capture-learning
+7. Use `support-monkey rovo-questions cases/<IncidentNumber>` to generate
+   Confluence/Rovo research questions for ownership, runbooks, known errors,
+   dashboards, and dependencies.
+8. Review Markdown drafts in VS Code preview.
+9. Capture pending learnings with `support-monkey capture-learning
    cases/<IncidentNumber>` only after reviewing the case.
-9. Manually copy approved text into ServiceNow, Jira, or Slack.
+10. Manually copy approved text into ServiceNow, Jira, or Slack.
 
 Support-Monkey remains draft-only by default. It should not write to workplace
 systems without explicit human approval and a later approved integration.

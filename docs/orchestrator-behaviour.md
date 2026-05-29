@@ -131,6 +131,19 @@ Manual junior work should be limited to providing answers and copying external
 screenshots, log exports, or query result files into the exact evidence path
 printed by Support-Monkey.
 
+Support engineers usually do not have direct customer access. Do not ask them
+to contact customers. Use ServiceNow, call-centre notes, monitoring, logs,
+Confluence/Rovo, Teams, and internal systems as evidence sources.
+
+For Confluence discovery, generate focused Rovo questions:
+
+```sh
+support-monkey rovo-questions cases/<IncidentNumber>
+```
+
+Paste those into Rovo when no direct integration is available, then record
+useful cited answers with `support-monkey add-evidence`.
+
 `worknotes.md` is the primary operational artifact. It should stay
 timestamped, factual, and easy to copy into ServiceNow.
 

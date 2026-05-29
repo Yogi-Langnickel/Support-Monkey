@@ -11,6 +11,7 @@ from .cases import (
     create_incident_case,
     import_incident_case,
     render_case_next_action,
+    render_rovo_questions,
     render_case_status,
     update_case_context,
 )
@@ -68,6 +69,12 @@ def main(argv: list[str] | None = None) -> int:
         help="Show concise readiness status for a case folder.",
     )
     status_parser.add_argument("case", type=Path)
+
+    rovo_parser = subparsers.add_parser(
+        "rovo-questions",
+        help="Generate Rovo-ready Confluence research questions for a case.",
+    )
+    rovo_parser.add_argument("case", type=Path)
 
     update_parser = subparsers.add_parser(
         "update-case",
@@ -153,6 +160,8 @@ def main(argv: list[str] | None = None) -> int:
         return _next(args.case)
     if args.command == "status":
         return _status(args.case)
+    if args.command == "rovo-questions":
+        return _rovo_questions(args.case)
     if args.command == "update-case":
         return _update_case(
             args.case,
@@ -264,6 +273,15 @@ def _next(case_path: Path) -> int:
 def _status(case_path: Path) -> int:
     try:
         print(render_case_status(case_path), end="")
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    return 0
+
+
+def _rovo_questions(case_path: Path) -> int:
+    try:
+        print(render_rovo_questions(case_path), end="")
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
