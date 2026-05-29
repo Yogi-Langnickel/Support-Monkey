@@ -24,7 +24,7 @@ Install or confirm:
 - WSL 2 with Ubuntu or another approved Linux distribution.
 - VS Code on Windows.
 - VS Code Remote - WSL extension.
-- Python 3.11 or newer inside WSL.
+- Python 3.9 or newer inside WSL.
 - Git inside WSL.
 
 Check versions from the WSL terminal:
@@ -68,6 +68,7 @@ VS Code for all Support-Monkey commands.
 Run the current offline helpers:
 
 ```sh
+support-monkey doctor
 support-monkey new-incident INC0012345
 support-monkey import-incident examples/monday-test-incident.json --overwrite
 support-monkey status cases/INC-MONDAY-001
@@ -81,6 +82,7 @@ support-monkey resolution-gate examples/incident.sample.json
 If the console script is not installed yet, run with `PYTHONPATH`:
 
 ```sh
+PYTHONPATH=src python3 -m support_monkey.cli doctor
 PYTHONPATH=src python3 -m support_monkey.cli new-incident INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
 PYTHONPATH=src python3 -m support_monkey.cli status cases/INC-MONDAY-001

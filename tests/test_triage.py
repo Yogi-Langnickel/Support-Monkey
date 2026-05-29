@@ -11,6 +11,7 @@ from support_monkey.cases import (
     render_case_next_action,
     render_case_status,
 )
+from support_monkey.doctor import render_doctor_report
 from support_monkey.models import Incident
 from support_monkey.questions import generate_clarification_questions
 from support_monkey.resolution import (
@@ -227,6 +228,28 @@ class TriageTest(unittest.TestCase):
             self.assertIn("lookup-api", status)
             self.assertIn("Collect one hard technical signal", status)
             self.assertIn("Recommended Next Action", status)
+
+    def test_doctor_reports_monday_readiness(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            (root / "examples").mkdir()
+            (root / "docs" / "transport").mkdir(parents=True)
+            (root / "pyproject.toml").write_text("[project]\nname = \"support-monkey\"\n", encoding="utf-8")
+            (root / "examples" / "monday-test-incident.json").write_text(
+                json.dumps({"number": "INC-MONDAY-001"}),
+                encoding="utf-8",
+            )
+            (root / "docs" / "monday-junior-test.md").write_text("# Monday\n", encoding="utf-8")
+            (root / "docs" / "transport" / "bootstrap-prompt.md").write_text("# Bootstrap\n", encoding="utf-8")
+
+            report = render_doctor_report(cases_dir=Path("cases"), project_root=root)
+
+            self.assertIn("Status: `ready`", report)
+            self.assertIn("Monday mock incident", report)
+            self.assertTrue((root / "cases").is_dir())
+
+    def test_cli_doctor_runs_from_repo_root(self) -> None:
+        self.assertEqual(main(["doctor", "--cases-dir", "cases"]), 0)
 
     def test_build_triage_pack_cites_ticket_evidence_and_timeout_hypothesis(self) -> None:
         incident = Incident.from_dict(

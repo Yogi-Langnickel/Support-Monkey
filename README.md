@@ -48,6 +48,7 @@ resolution gate.
 ## Local Offline Demo
 
 ```sh
+python3 -m support_monkey.cli doctor
 python3 -m support_monkey.cli new-incident INC0012345
 python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
 python3 -m support_monkey.cli status cases/INC-MONDAY-001
@@ -58,6 +59,8 @@ python3 -m support_monkey.cli questions examples/incident.sample.json
 python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
 ```
 
+`doctor` checks the local runtime, required Monday files, the mock incident JSON,
+and case-directory writability before a junior starts the pilot.
 `new-incident` creates a guarded local case folder under `cases/<incident>/`
 with ServiceNow-copyable worknotes, evidence ledger, timeline, impact,
 hypothesis, RCA, branch-plan, command, Problem Record, and final-summary files.

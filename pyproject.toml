@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "support-monkey"
 version = "0.1.0"
 description = "Local-first incident intelligence copilot for Digital Application Support."
-requires-python = ">=3.11"
+requires-python = ">=3.9"
 dependencies = []
 
 [project.scripts]
@@ -14,4 +14,3 @@ support-monkey = "support_monkey.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
-

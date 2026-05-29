@@ -12,6 +12,7 @@ from .cases import (
     render_case_next_action,
     render_case_status,
 )
+from .doctor import doctor_checks_ready, render_doctor_report, run_doctor_checks
 from .models import Incident
 from .questions import render_questions_markdown
 from .resolution import render_resolution_gate_markdown
@@ -90,6 +91,17 @@ def main(argv: list[str] | None = None) -> int:
     )
     resolution_parser.add_argument("incident_json", type=Path)
 
+    doctor_parser = subparsers.add_parser(
+        "doctor",
+        help="Check local readiness for the Monday junior test.",
+    )
+    doctor_parser.add_argument(
+        "--cases-dir",
+        type=Path,
+        default=Path("cases"),
+        help="Directory where incident case folders are stored.",
+    )
+
     args = parser.parse_args(argv)
     if args.command == "triage":
         return _triage(args.incident_json)
@@ -111,6 +123,8 @@ def main(argv: list[str] | None = None) -> int:
         return _questions(args.incident_json)
     if args.command == "resolution-gate":
         return _resolution_gate(args.incident_json)
+    if args.command == "doctor":
+        return _doctor(cases_dir=args.cases_dir)
     parser.error(f"unknown command: {args.command}")
     return 2
 
@@ -215,6 +229,12 @@ def _resolution_gate(path: Path) -> int:
         return 2
     print(render_resolution_gate_markdown(incident), end="")
     return 0
+
+
+def _doctor(*, cases_dir: Path) -> int:
+    checks = run_doctor_checks(cases_dir=cases_dir)
+    print(render_doctor_report(checks=checks), end="")
+    return 0 if doctor_checks_ready(checks) else 2
 
 
 def _read_incident(path: Path) -> Incident | None:

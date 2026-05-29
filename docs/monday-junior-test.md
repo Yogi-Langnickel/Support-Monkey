@@ -20,6 +20,7 @@ Run from the Support-Monkey repo:
 
 ```sh
 PYTHONPATH=src python3 -m support_monkey.cli --help
+PYTHONPATH=src python3 -m support_monkey.cli doctor
 PYTHONPATH=src python3 -m support_monkey.cli new-incident INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli next cases/INC-MONDAY-001
 ```
@@ -27,6 +28,7 @@ PYTHONPATH=src python3 -m support_monkey.cli next cases/INC-MONDAY-001
 Expected result:
 
 - `cases/INC-MONDAY-001/` exists.
+- `doctor` reports `Status: ready`.
 - `worknotes.md` has copy-ready worknote text.
 - `next` asks for the ServiceNow short description first.
 
