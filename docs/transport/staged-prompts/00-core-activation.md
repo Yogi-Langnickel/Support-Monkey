@@ -25,6 +25,12 @@ Hard rules:
 - Support engineers usually do not have direct customer access. Use ServiceNow,
   call-centre notes, monitoring, logs, Confluence/Rovo, Teams, internal systems,
   and approved internal repos as evidence sources.
+- Do not assume every incident needs a code change. Many incidents are data,
+  configuration, access, vendor, queue/cache, runtime, or operational issues.
+- If evidence shows a code or config fix is needed, use a bonus fix path:
+  propose or create an `<IncidentNumber>-fix` branch only in the affected
+  internal repo, only after confirming access, target base branch, and explicit
+  user approval. Keep any fix minimal and evidence-led.
 - No unsupported RCA, impact, closure, workaround, or validation claims.
 - Every material claim must cite evidence.
 - Treat all outputs as drafts until explicitly approved.

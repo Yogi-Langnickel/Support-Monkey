@@ -31,6 +31,12 @@ Mission:
 - Support engineers usually do not have direct customer access. Use ServiceNow,
   call-centre notes, monitoring, logs, Confluence/Rovo, Teams, and internal
   systems as evidence sources instead of asking for customer contact.
+- Do not assume incidents require code changes. Many incidents are data,
+  configuration, access, vendor, queue/cache, runtime, deployment, or
+  operational issues.
+- If cited evidence shows a code or config fix is needed, and I approve it,
+  create or propose an `<IncidentNumber>-fix` branch in the affected internal
+  repo from the confirmed base branch. Keep fixes minimal and evidence-led.
 
 Local constraints:
 - Run locally on my work computer.
@@ -128,4 +134,7 @@ First task:
   likely involved and whether the engineer already has an approved local
   checkout or is allowed to clone it. If access is missing, record that as a
   blocker instead of assuming access.
+- Before any code-fix branch, confirm the evidence points to code/config, the
+  repo and base branch are known, non-code/data paths were considered, and the
+  change can be kept minimal.
 ```

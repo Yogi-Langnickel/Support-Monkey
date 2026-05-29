@@ -25,4 +25,20 @@ When repository evidence may be needed:
 
 When repository evidence is provided, cite file path, branch/commit if known,
 line or snippet labels, and summarize the relevance in evidence-ledger.json.
+
+Bonus fix-branch path:
+- Only use this path when evidence shows the incident likely needs a code or
+  config fix. Many incidents are data, access, vendor, queue/cache, runtime,
+  deployment, or operational issues and should not create code churn.
+- Ask the user to confirm the affected internal repo, approved access, target
+  base branch, and permission to create a branch.
+- Create or propose a branch named `<IncidentNumber>-fix` from the confirmed
+  base branch, normally `master`, `main`, or the active release branch.
+- Keep changes surgical: no unrelated refactors, no broad formatting, no
+  dependency churn, and no speculative fixes.
+- Record why a code fix is needed, what non-code paths were ruled out, the
+  files touched, tests or validation run, rollback notes, and any PR/link in
+  the incident artifacts.
+- If a fix is not available, provide a concise workaround, data repair path,
+  Problem Record candidate, vendor escalation, or ownership handoff instead.
 ```
