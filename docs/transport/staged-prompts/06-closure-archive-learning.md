@@ -35,6 +35,10 @@ Perform the closure process:
    - impact
    - evidence list
    - resolution path
+   - whether a code fix was needed
+   - fix branch or PR if created
+   - no-code reason if the resolution was data, access, vendor, queue/cache,
+     runtime, deployment, or operational
    - validation
    - blockers
    - follow-ups
@@ -42,8 +46,8 @@ Perform the closure process:
    - mark it PENDING HUMAN REVIEW
    - remove secrets, customer data, internal URLs, hostnames, and account IDs
    - capture reusable symptoms, repo/service patterns, safe checks, Rovo queries,
-     runbook links/titles, known workarounds, validation patterns, and access
-     blockers
+     runbook links/titles, known workarounds, validation patterns, access
+     blockers, data-issue patterns, and minimal-fix patterns
    - do not promote to durable memory until a senior reviews it
 7. Create memory-candidate.md:
    - only general reusable engineering knowledge

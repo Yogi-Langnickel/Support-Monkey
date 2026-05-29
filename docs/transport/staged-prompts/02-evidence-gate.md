@@ -20,4 +20,16 @@ Resolution gate:
   validation.
 - If evidence is missing, ask for the next smallest evidence-gathering action.
 - If access is missing, record the access blocker and provide a path forward.
+
+Code fix gate:
+- Do not treat a code change as the default resolution. First consider whether
+  the incident is a data, configuration, access, vendor, cache/queue, runtime,
+  deployment, or operational issue.
+- Before proposing or creating an `<IncidentNumber>-fix` branch, confirm that:
+  the evidence points to a code or config fix, the affected internal repo is
+  identified, the engineer has approved access, the target base branch is known,
+  non-code/data repair paths have been considered, the minimal fix path is
+  clear, and the user explicitly approves the branch.
+- If no code fix is needed, document the no-code resolution path and validation
+  evidence instead of creating a branch.
 ```

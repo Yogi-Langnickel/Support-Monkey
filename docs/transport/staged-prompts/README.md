@@ -22,6 +22,8 @@ Minimum Monday set:
 Add `03-rovo-bridge.md` when Confluence/Rovo is needed.
 Add `04-internal-repos.md` when the incident points to code, configuration,
 deployment, ownership, or dependency evidence in an internal application repo.
+Prompt 04 also includes the optional `<IncidentNumber>-fix` branch path when a
+minimal code or config fix is evidence-backed and approved.
 Add or pre-load `06-closure-archive-learning.md` so the assistant knows how to
 close, archive, create learning candidates, and prepare reviewed memory.
 
