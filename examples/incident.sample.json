@@ -6,13 +6,30 @@
   "description": "Call center reports multiple external customers cannot complete checkout.",
   "callerNotes": "Customer says payment page spins for about one minute and then fails.",
   "affectedSystems": ["checkout-web", "payment-orchestrator", "vendor-payment-gateway"],
+  "impact": {
+    "scope": "multi_tenant",
+    "depth": "partial_outage",
+    "affectedUsersEstimate": 3,
+    "evidenceIds": ["EV-001"]
+  },
+  "timeline": [
+    {
+      "occurredAt": "2026-05-18T09:15:00+10:00",
+      "summary": "First call center report for checkout timeout.",
+      "evidenceId": "EV-001"
+    }
+  ],
   "evidence": [
     {
+      "id": "EV-001",
       "source": "ServiceNow",
+      "type": "ticket",
+      "strength": "soft",
       "reference": "INC0012345",
       "confidence": "reported",
+      "observedAt": "2026-05-18T09:15:00+10:00",
+      "supports": ["symptom", "impact", "timeline"],
       "summary": "Three call center reports mention checkout timeout in the last 20 minutes."
     }
   ]
 }
-

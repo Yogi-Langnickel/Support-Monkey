@@ -41,16 +41,34 @@ Claude Enterprise, or another approved workplace AI assistant. These prompts
 define the Support-Monkey orchestrator, incident council, evidence review, RCA
 drafting, Jira drafting, and redaction-review workflows.
 
+Use `docs/evidence-standards.md` for the formal evidence taxonomy, confidence
+labels, timeline format, impact buckets, and validation patterns used by the
+resolution gate.
+
 ## Local Offline Demo
 
 ```sh
+python3 -m support_monkey.cli new-incident INC0012345
+python3 -m support_monkey.cli next cases/INC0012345
 python3 -m support_monkey.cli triage examples/incident.sample.json
 python3 -m support_monkey.cli questions examples/incident.sample.json
 python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
 ```
 
-The command reads a sanitized incident JSON file and emits a Markdown triage
-pack to stdout.
+`new-incident` creates a guarded local case folder under `cases/<incident>/`
+with ServiceNow-copyable worknotes, evidence ledger, timeline, impact,
+hypothesis, RCA, branch-plan, command, Problem Record, and final-summary files.
+`next` reads the case and gives the junior engineer one small investigation
+action with guardrails and a copy-ready worknote stub.
+
+The older `triage`, `questions`, and `resolution-gate` commands read a
+sanitized incident JSON file and emit Markdown to stdout.
+
+## Local Validation
+
+```sh
+PYTHONPATH=src python3 -m unittest discover -s tests -p 'test*.py'
+```
 
 ## Orchestrator Behaviour
 
@@ -72,6 +90,14 @@ generates concrete follow-up questions from incomplete incident data.
 The `resolution-gate` command is the conservative closure guard. It reports
 which evidence classes are still missing before Support-Monkey may claim root
 cause, impact, workaround, fix validation, vendor fault, or Jira-ready handoff.
+It also reports a data quality score so soft-only investigations are flagged as
+high risk even when all required fields appear to be filled.
+
+The `new-incident` and `next` commands are the first junior-support workflow.
+They intentionally keep the process manual and local: the junior pastes
+ServiceNow details, log outputs, query results, screenshots, and local repo
+findings into the case folder. API integrations should come after this workflow
+is reliable under incident pressure.
 
 API integrations are optional, not assumed. If ServiceNow, Confluence, AWS,
 NewRelic, Jira, or repository APIs are blocked by policy or access, use local

@@ -37,6 +37,15 @@ Look for:
 - alternative explanations,
 - claims that need stronger proof before RCA.
 
+Counter-hypothesis requirement:
+
+- State the leading hypothesis in one sentence.
+- Argue against it using the strongest contradictory or missing evidence.
+- Name at least one plausible alternative cause and the evidence that would
+  confirm or disconfirm it.
+- Do not let a hypothesis become `confirmed` unless it meets the confidence
+  criteria in `docs/evidence-standards.md`.
+
 ### The Architect: Systems And Ownership
 
 Look for:
@@ -111,6 +120,8 @@ Look for:
 ## Cross-Role Agreement
 
 ## Conflicts Between Roles
+
+## Counter-Hypothesis Review
 
 ## Immediate Next Checks
 

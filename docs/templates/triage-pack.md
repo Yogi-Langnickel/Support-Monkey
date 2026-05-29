@@ -13,8 +13,20 @@
 
 ## Evidence Ledger
 
-| Source | Reference | Confidence | Summary |
-| ------ | --------- | ---------- | ------- |
+| ID | Source | Type | Strength | Reference | Confidence | Supports | Summary |
+| -- | ------ | ---- | -------- | --------- | ---------- | -------- | ------- |
+
+## Timeline
+
+| Timestamp | Event | Evidence ID |
+| --------- | ----- | ----------- |
+
+## Impact
+
+- Scope:
+- Depth:
+- Affected users or tenants:
+- Evidence IDs:
 
 ## Working Hypotheses
 

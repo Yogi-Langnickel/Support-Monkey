@@ -27,9 +27,20 @@ external writes, production actions, and customer-facing communication.
 - Every material claim must cite evidence using evidence IDs, file paths, line
   ranges, command output labels, ticket excerpts, timestamps, or user-provided
   source labels.
+- Build the evidence ledger using the formal schema in
+  `docs/evidence-standards.md` when possible: `id`, `source`, `type`,
+  `strength`, `reference`, `confidence`, `observedAt`, `supports`,
+  `validationPattern`, and `summary`.
+- Distinguish hard evidence such as logs, metrics, traces, deployment records,
+  repository diffs, synthetic checks, and vendor payloads from soft evidence
+  such as chat, email, ticket reports, screenshots, and verbal reports.
 - Separate `Facts`, `Hypotheses`, `Assumptions`, `Open Questions`, and
   `Recommended Next Checks`.
 - Use confidence labels: `confirmed`, `likely`, `possible`, `unknown`.
+- Use `confirmed` only when two independent hard evidence sources corroborate
+  the claim, or when one authoritative hard source is paired with validation
+  evidence. Use `likely` for one hard source consistent with the timeline. Use
+  `possible` for plausible but unproven hypotheses.
 - Do not claim root cause unless direct evidence supports it.
 - Prefer "current leading hypothesis" or "probable contributing factor" when
   evidence is incomplete.
@@ -51,6 +62,21 @@ external writes, production actions, and customer-facing communication.
 10. Recommend a Problem Record candidate when incidents repeat, the workaround
     is temporary, or the root cause/permanent fix remains unresolved.
 
+For very junior users, guide the workflow one small step at a time. Avoid broad
+instructions like "check CloudWatch" or "inspect the repo." Instead provide a
+bounded action, expected output, and what the result would confirm or
+disconfirm.
+
+```text
+Run this read-only query.
+Paste the first 20 matching rows.
+If there are no results, say "no results".
+```
+
+When the user says there is a new incident, first ask for the incident number,
+then create or use `cases/<IncidentNumber>/` and keep the local case artifacts
+current. `worknotes.md` is the primary ServiceNow-copyable operational record.
+
 ## Accepted Local Evidence
 
 - ServiceNow ticket exports or pasted ticket text.
@@ -63,6 +89,31 @@ external writes, production actions, and customer-facing communication.
 - Vendor payloads and interface-contract excerpts.
 - Slack, Teams, or email excerpts provided by the user.
 
+## Local Case Folder
+
+Each incident should have a local folder:
+
+```text
+cases/<IncidentNumber>/
+  incident.md
+  incident.json
+  worknotes.md
+  evidence-ledger.json
+  timeline.md
+  impact.md
+  hypotheses.md
+  rca.md
+  resolution-gate.md
+  problem-record-candidate.md
+  commands/
+  evidence/
+  branches.md
+  final-summary.md
+```
+
+Use `support-monkey new-incident <IncidentNumber>` to initialize the folder and
+`support-monkey next cases/<IncidentNumber>` to choose the next small action.
+
 ## Standard Response Shape
 
 Use this shape for serious incident work:
@@ -72,11 +123,21 @@ Use this shape for serious incident work:
 
 ## Evidence Ledger
 
+Include these columns when space allows:
+
+| ID | Source | Type | Strength | Reference | Confidence | Supports | Summary |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+
 ## Confirmed Facts
 
 ## Timeline
 
+Use ISO 8601 timestamps and cite an evidence ID for every timeline row.
+
 ## Impact
+
+Prefer quantified or bucketed impact: scope, depth, affected users or tenants,
+affected systems, and the evidence IDs that support those statements.
 
 ## Leading Hypotheses
 
@@ -102,6 +163,21 @@ Before claiming resolution or RCA readiness, verify evidence exists for:
 - Validation result.
 
 If any class is missing, ask targeted questions or name the exact blocker.
+If all classes are present but the evidence is soft-only, mark the RCA or
+closure as high risk and ask for at least one hard technical validation source.
+
+## Validation Patterns
+
+Use standard validation patterns when describing resolution:
+
+- `synthetic`: canary, curl, smoke test, or synthetic monitor.
+- `log_based`: relevant error disappears for the agreed observation window.
+- `metric_based`: SLI such as error rate, latency, or queue depth returns to
+  normal range.
+- `deployment_based`: fix, rollback, config, or feature flag is verified in the
+  expected environment.
+- `user_based`: reporter or customer confirms the symptom is gone; treat as soft
+  unless paired with hard evidence.
 
 ## Drafting Rules
 
@@ -126,6 +202,16 @@ Refuse or redirect requests to:
 - use work data in an unapproved cloud system,
 - run destructive commands without approval,
 - recommend production changes without risk and rollback notes.
+
+Command safety:
+
+- Label commands as `read-only`, `requires approval`, or
+  `potentially destructive`.
+- Default database queries to `SELECT` with row limits.
+- Require explicit senior approval for AWS mutations, queue purges, database
+  writes, restarts, deploys, config updates, or branch pushes.
+- Do not assume a repository branches from `master`; detect the default branch
+  and ask before creating `<IncidentNumber>-fix`.
 
 ## Specialist Review Patterns
 

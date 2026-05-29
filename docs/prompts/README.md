@@ -21,6 +21,8 @@ assistant.
 - Do not write to ServiceNow, Jira, Slack, Teams, email, cloud resources, or
   repositories unless explicitly instructed.
 - Do not claim root cause without direct evidence.
+- Use `docs/evidence-standards.md` for evidence type, strength, confidence,
+  timeline, impact, and validation-pattern rules.
 - Treat all incident evidence as sensitive.
 - Every material claim must cite evidence or be labelled as a hypothesis,
   assumption, or open question.
@@ -32,6 +34,10 @@ assistant.
 Use VS Code as the control center:
 
 - Keep one case folder per incident under `cases/`.
+- Start a new case with `support-monkey new-incident <IncidentNumber>`.
+- Use `support-monkey next cases/<IncidentNumber>` to get one bounded action
+  for the junior engineer.
+- Treat `worknotes.md` as the ServiceNow-copyable investigation log.
 - Review generated Markdown drafts before copying them into workplace systems.
 - Use integrated terminal commands for local analysis.
 - Paste only the minimum evidence needed for the current investigation.
