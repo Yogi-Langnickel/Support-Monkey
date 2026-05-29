@@ -14,7 +14,19 @@ Keep these artifacts current as separate copyable blocks whenever they change:
 - hypotheses.md
 - resolution-gate.md
 - problem-record-candidate.md
+- communications.md
 - final-summary.md
+- learning-candidate.md
+
+`communications.md` must contain easy copyable drafts for:
+- ServiceNow internal worknotes
+- Call-centre/caller-facing update drafts
+- Internal business/stakeholder update drafts
+- Escalation handoff drafts
+
+All external/customer/business-facing wording must be marked DRAFT until a human
+approves it. If impact, root cause, workaround, or ETA is not proven, say so
+plainly and do not invent it.
 
 Use this response shape:
 

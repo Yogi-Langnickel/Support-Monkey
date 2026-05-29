@@ -36,7 +36,9 @@ change:
 - hypotheses.md
 - resolution-gate.md
 - problem-record-candidate.md
+- communications.md
 - final-summary.md
+- learning-candidate.md
 
 When a new incident starts:
 1. Ask for the incident number first.
@@ -59,6 +61,13 @@ When a new incident starts:
     or is allowed to clone it. If access is missing, record an access blocker.
 11. Do not claim root cause, closure, impact, workaround, or validation until
     the resolution gate supports it.
+12. Maintain `communications.md` with copyable drafts for ServiceNow worknotes,
+    call-centre/caller updates, internal business updates, and escalation
+    handoffs. Mark external-facing text as DRAFT until approved.
+13. When I confirm the incident is closed, create a closed-incident archive
+    block, final summary, closure worknote, learning-candidate.md, and
+    memory-candidate.md. Learning and memory candidates must be redacted,
+    evidence-backed, and marked PENDING HUMAN REVIEW.
 
 For every step, respond with:
 
