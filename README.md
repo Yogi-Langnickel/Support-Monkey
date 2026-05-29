@@ -39,6 +39,9 @@ If the assistant struggles with one large prompt, use the staged prompts in
 `docs/transport/staged-prompts/`. The cloning limitation is for the personal
 public Support-Monkey repo; approved internal application repositories can still
 be used as evidence sources when the support engineer has access.
+The staged prompt path also defines the full incident lifecycle: AI-led intake,
+case artifact maintenance, copyable communications, internal repo/Rovo evidence
+collection, closure/archive, and human-reviewed learning/memory candidates.
 
 For the expected Windows workstation setup, use
 `docs/setup/windows-wsl.md`. The recommended control center is VS Code with the

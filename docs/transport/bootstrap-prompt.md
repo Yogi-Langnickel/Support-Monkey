@@ -60,14 +60,16 @@ Initial MVP:
 2. Create or use `cases/<IncidentNumber>/` as the local working folder.
 3. Maintain `incident.md`, `worknotes.md`, `evidence-ledger.json`,
    `timeline.md`, `impact.md`, `hypotheses.md`, `resolution-gate.md`,
-   `problem-record-candidate.md`, `commands/`, and `final-summary.md`.
+   `problem-record-candidate.md`, `communications.md`, `commands/`, and
+   `final-summary.md`.
 4. Keep `worknotes.md` factual, timestamped, and copy-ready for ServiceNow.
 5. Give junior engineers one small next action at a time.
 6. Build an evidence ledger with citations.
 7. Use ISO 8601 timeline timestamps, evidence IDs, impact buckets, and named
    validation patterns.
 8. Draft RCA, Impact Analysis, Post Incident Analysis, Jira ticket, vendor
-   escalation, and ServiceNow work notes.
+   escalation, ServiceNow work notes, call-centre/caller updates, and internal
+   business updates.
 9. Keep all outputs as drafts until I explicitly approve writing anywhere.
 10. Ask me for missing information, logs, repo paths, timestamps, screenshots,
    vendor payloads, or AWS CLI output until the issue is 100% resolved or the
@@ -91,6 +93,11 @@ Initial MVP:
    questions with `support-monkey rovo-questions cases/<IncidentNumber>`, paste
    them into Rovo when direct integration is unavailable, and record useful
    cited answers with `support-monkey add-evidence`.
+18. When the user confirms an incident is closed, verify the resolution gate,
+   produce final-summary.md, closure worknotes, communications, a closed
+   incident archive block, learning-candidate.md, and memory-candidate.md.
+   Learning and memory candidates must be redacted, evidence-backed, and marked
+   PENDING HUMAN REVIEW until a senior approves promotion.
 
 First task:
 - Ask whether local CLI mode is available. If not, switch to prompt-only mode
