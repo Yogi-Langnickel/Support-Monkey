@@ -7,7 +7,9 @@ from support_monkey.cli import main
 from support_monkey.cases import (
     capture_learning_candidate,
     create_incident_case,
+    import_incident_case,
     render_case_next_action,
+    render_case_status,
 )
 from support_monkey.models import Incident
 from support_monkey.questions import generate_clarification_questions
@@ -153,6 +155,78 @@ class TriageTest(unittest.TestCase):
 
             self.assertEqual(result, 0)
             self.assertTrue(list((base_dir / "learnings" / "pending").glob("INC204-*.md")))
+
+    def test_import_incident_case_seeds_case_from_json_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = {
+                "number": "INC205",
+                "priority": "P2",
+                "openedAt": "2026-06-01T09:10:00+10:00",
+                "shortDescription": "Customer portal 502",
+                "description": "Several users see intermittent 502.",
+                "affectedSystems": ["customer-portal", "account-bff"],
+                "evidence": [
+                    {
+                        "id": "EV-001",
+                        "source": "ServiceNow",
+                        "type": "ticket",
+                        "strength": "soft",
+                        "reference": "INC205",
+                        "supports": ["symptom", "timeline"],
+                        "summary": "Ticket reports intermittent 502.",
+                    }
+                ],
+            }
+
+            result = import_incident_case(payload, cases_dir=Path(temp_dir), overwrite=True)
+
+            incident_json = json.loads((result.case_dir / "incident.json").read_text(encoding="utf-8"))
+            evidence_json = json.loads((result.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
+            self.assertEqual(result.incident_number, "INC205")
+            self.assertEqual(incident_json["shortDescription"], "Customer portal 502")
+            self.assertEqual(evidence_json["items"][0]["id"], "EV-001")
+            self.assertIn("Customer portal 502", (result.case_dir / "incident.md").read_text(encoding="utf-8"))
+            self.assertIn("soft evidence only", (result.case_dir / "worknotes.md").read_text(encoding="utf-8"))
+
+    def test_cli_import_incident_and_status_are_monday_friendly(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_dir = Path(temp_dir)
+            incident_path = base_dir / "incident.json"
+            incident_path.write_text(
+                json.dumps(
+                    {
+                        "number": "INC206",
+                        "priority": "P3",
+                        "openedAt": "2026-06-01T09:10:00+10:00",
+                        "shortDescription": "Lookup timeout",
+                        "description": "Call centre reports intermittent lookup timeout.",
+                        "callerNotes": "Several users saw timeout errors around 09:10.",
+                        "affectedSystems": ["lookup-api"],
+                        "evidence": [
+                            {
+                                "id": "EV-001",
+                                "source": "ServiceNow",
+                                "type": "ticket",
+                                "strength": "soft",
+                                "reference": "INC206",
+                                "confidence": "reported",
+                                "supports": ["symptom", "timeline"],
+                                "summary": "Reporter saw timeout errors in lookup-api.",
+                            }
+                        ],
+                    }
+                ),
+                encoding="utf-8",
+            )
+
+            import_result = main(["import-incident", str(incident_path), "--cases-dir", str(base_dir / "cases")])
+            status = render_case_status(base_dir / "cases" / "INC206")
+
+            self.assertEqual(import_result, 0)
+            self.assertIn("# Case Status: INC206", status)
+            self.assertIn("lookup-api", status)
+            self.assertIn("Collect one hard technical signal", status)
+            self.assertIn("Recommended Next Action", status)
 
     def test_build_triage_pack_cites_ticket_evidence_and_timeout_hypothesis(self) -> None:
         incident = Incident.from_dict(
@@ -385,6 +459,36 @@ class TriageTest(unittest.TestCase):
         self.assertIn("State: `needs_more_evidence`", markdown)
         self.assertIn("Data Quality Risk: `high_risk_soft_only`", markdown)
         self.assertIn("No hard evidence is present", markdown)
+
+    def test_resolution_gate_does_not_treat_reported_errors_as_hard_technical_evidence(self) -> None:
+        incident = Incident.from_dict(
+            {
+                "number": "INC108",
+                "priority": "P2",
+                "shortDescription": "Customer portal 502",
+                "openedAt": "2026-05-18T09:00:00+10:00",
+                "affectedSystems": ["customer-portal"],
+                "evidence": [
+                    {
+                        "id": "EV-001",
+                        "source": "ServiceNow",
+                        "type": "ticket",
+                        "strength": "soft",
+                        "reference": "INC108",
+                        "confidence": "reported",
+                        "supports": ["symptom", "timeline"],
+                        "summary": "Reporter saw intermittent 502 errors in the customer portal.",
+                    }
+                ],
+            }
+        )
+
+        state, missing = classify_resolution_state(incident)
+        quality = assess_evidence_quality(incident)
+
+        self.assertEqual(state, "needs_more_evidence")
+        self.assertIn("technical evidence", missing)
+        self.assertEqual(quality.risk, "high_risk_soft_only")
 
     def test_resolution_gate_rejects_broken_evidence_citations(self) -> None:
         incident = Incident.from_dict(

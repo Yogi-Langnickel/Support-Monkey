@@ -228,9 +228,9 @@ def _evidence_supported_classes(item: Evidence) -> set[str]:
             present.add(normalized)
 
     text = f"{item.source} {item.reference} {item.summary}".lower()
-    if any(
+    if _is_hard_evidence(item) and any(
         token in text
-        for token in ("log", "cloudwatch", "newrelic", "trace", "error", "stack")
+        for token in ("log", "cloudwatch", "newrelic", "metric", "trace", "error", "stack")
     ):
         present.add("technical evidence")
     if any(

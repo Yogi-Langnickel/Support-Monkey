@@ -26,6 +26,15 @@ class LearningCaptureResult:
     incident_number: str
 
 
+@dataclass(frozen=True)
+class CaseImportResult:
+    case_dir: Path
+    incident_number: str
+    created_files: tuple[Path, ...]
+    existing_files: tuple[Path, ...]
+    overwritten_files: tuple[Path, ...]
+
+
 def create_incident_case(
     incident_number: str,
     *,
@@ -91,6 +100,80 @@ def render_case_next_action(case_path: Path) -> str:
         "```text",
         _worknote_stub(action),
         "```",
+    ]
+    return "\n".join(lines).strip() + "\n"
+
+
+def import_incident_case(
+    incident_payload: dict[str, object],
+    *,
+    cases_dir: Path = Path("cases"),
+    overwrite: bool = False,
+    now: datetime | None = None,
+) -> CaseImportResult:
+    incident = Incident.from_dict(incident_payload)
+    created_case = create_incident_case(incident.number, cases_dir=cases_dir, now=now)
+    case_dir = created_case.case_dir
+    newly_created = set(created_case.created_files)
+    overwritten: list[Path] = []
+
+    incident_file_payload = _case_incident_payload(incident_payload, incident.number, now=now)
+    evidence_payload = {
+        "incidentNumber": incident.number,
+        "items": list(incident_file_payload.get("evidence", [])),
+    }
+    writes = {
+        "incident.json": json.dumps(incident_file_payload, indent=2) + "\n",
+        "evidence-ledger.json": json.dumps(evidence_payload, indent=2) + "\n",
+        "incident.md": _incident_markdown_from_incident(Incident.from_dict(incident_file_payload)),
+        "worknotes.md": _imported_worknotes_markdown(Incident.from_dict(incident_file_payload)),
+    }
+    for relative, content in writes.items():
+        path = case_dir / relative
+        if path.exists() and path not in newly_created and not overwrite:
+            continue
+        path.write_text(content, encoding="utf-8")
+        overwritten.append(path)
+
+    return CaseImportResult(
+        case_dir=case_dir,
+        incident_number=incident.number,
+        created_files=created_case.created_files,
+        existing_files=created_case.existing_files,
+        overwritten_files=tuple(overwritten),
+    )
+
+
+def render_case_status(case_path: Path) -> str:
+    case_dir = _resolve_case_dir(case_path)
+    incident = _read_case_incident(case_dir)
+    state, missing = classify_resolution_state(incident)
+    quality = assess_evidence_quality(incident)
+    affected = ", ".join(incident.affected_systems) if incident.affected_systems else "unknown"
+    evidence = incident.evidence
+    hard = quality.hard_evidence_count
+    soft = quality.soft_evidence_count
+    missing_text = ", ".join(missing) if missing else "none"
+    next_action = _next_action(incident, missing)
+    files = _case_file_health(case_dir)
+
+    lines = [
+        f"# Case Status: {incident.number}",
+        "",
+        f"Case folder: `{case_dir}`",
+        f"Priority: `{incident.priority}`",
+        f"Opened: `{incident.opened_at or 'unknown'}`",
+        f"Affected systems: {affected}",
+        f"Resolution gate: `{state}`",
+        f"Evidence quality: `{quality.score}/100` (`{quality.risk}`)",
+        f"Evidence items: `{len(evidence)}` (hard `{hard}`, soft `{soft}`)",
+        f"Missing evidence classes: {missing_text}",
+        "",
+        "## File Health",
+        *files,
+        "",
+        "## Recommended Next Action",
+        next_action,
     ]
     return "\n".join(lines).strip() + "\n"
 
@@ -176,6 +259,126 @@ def _case_files(incident_number: str, created_at: str) -> dict[str, str]:
         "final-summary.md": _final_summary_markdown(incident_number),
         "branches.md": _branches_markdown(incident_number),
     }
+
+
+def _case_incident_payload(
+    incident_payload: dict[str, object],
+    incident_number: str,
+    *,
+    now: datetime | None,
+) -> dict[str, object]:
+    payload = dict(incident_payload)
+    payload["number"] = incident_number
+    timestamp = _iso_now(now)
+    case_payload = payload.get("case")
+    if not isinstance(case_payload, dict):
+        case_payload = {}
+    case_payload = dict(case_payload)
+    case_payload.setdefault("createdAt", timestamp)
+    case_payload.setdefault("startedAt", timestamp)
+    case_payload.setdefault("resolvedAt", "")
+    case_payload.setdefault("status", "intake")
+    payload["case"] = case_payload
+    payload.setdefault("evidence", [])
+    payload.setdefault("timeline", [])
+    payload.setdefault(
+        "impact",
+        {
+            "scope": "unknown",
+            "depth": "unknown",
+            "affectedUsersEstimate": None,
+            "evidenceIds": [],
+        },
+    )
+    payload.setdefault("affectedSystems", [])
+    return payload
+
+
+def _incident_markdown_from_incident(incident: Incident) -> str:
+    affected = ", ".join(incident.affected_systems)
+    known_items = []
+    if incident.short_description:
+        known_items.append(f"- Symptom reported: {incident.short_description}")
+    if incident.opened_at:
+        known_items.append(f"- Opened: {incident.opened_at}")
+    if affected:
+        known_items.append(f"- Affected systems reported: {affected}")
+    if incident.evidence:
+        known_items.append(f"- Evidence items imported: {len(incident.evidence)}")
+    known = "\n".join(known_items) if known_items else "- Pending ServiceNow details."
+    description = incident.description or "not provided"
+    caller_notes = incident.caller_notes or "not provided"
+    return f"""# Incident {incident.number}
+
+Status: intake
+Case created:
+Started:
+Resolved:
+Duration:
+
+## ServiceNow Details
+
+- Incident number: {incident.number}
+- Priority: {incident.priority}
+- Opened: {incident.opened_at or "unknown"}
+- Short description: {incident.short_description or "not provided"}
+- Description: {description}
+- Caller / reporter notes: {caller_notes}
+
+## Current Situation
+
+- Reported symptom: {incident.short_description or "unknown"}
+- Affected user journey:
+- Affected systems: {affected or "unknown"}
+- Known customer impact:
+- Current workaround:
+
+## Known / Unknown / Assumed
+
+### Known
+
+{known}
+
+### Unknown
+
+- Exact failing component.
+- Quantified impact scope.
+- Hard technical evidence.
+- Resolution path.
+- Validation evidence.
+
+### Assumed
+
+- None. Do not add assumptions without labeling them.
+
+## Current Owner / Escalation
+
+- Incident commander:
+- Support owner:
+- Product/platform owner:
+- Vendor owner:
+- Teams/bridge channel:
+- Last stakeholder update:
+"""
+
+
+def _imported_worknotes_markdown(incident: Incident) -> str:
+    opened = incident.opened_at or "unknown"
+    return f"""# Worknotes: {incident.number}
+
+Use this file for ServiceNow-copyable internal worknotes. Keep entries factual,
+timestamped, and evidence-based. Do not claim root cause until the resolution
+gate is ready for human review.
+
+## Worknote Entries
+
+```text
+[<timestamp>] Imported ServiceNow-style incident details into Support-Monkey case.
+Result: Priority={incident.priority}; opened={opened}; short description=\"{incident.short_description or 'not provided'}\".
+Outcome: Ticket data is intake/soft evidence only. No root cause, impact, workaround, or validation confirmed yet.
+Next: Run support-monkey next for the first required evidence-gathering action.
+```
+"""
 
 
 def _incident_markdown(incident_number: str, created_at: str) -> str:
@@ -520,6 +723,28 @@ def _resolve_case_dir(case_path: Path) -> Path:
     raise FileNotFoundError(f"case folder not found: {case_path}")
 
 
+def _case_file_health(case_dir: Path) -> tuple[str, ...]:
+    expected = (
+        "incident.json",
+        "incident.md",
+        "worknotes.md",
+        "evidence-ledger.json",
+        "timeline.md",
+        "impact.md",
+        "hypotheses.md",
+        "resolution-gate.md",
+        "problem-record-candidate.md",
+        "commands/cloudwatch.md",
+        "commands/sql.md",
+        "final-summary.md",
+    )
+    rows = []
+    for relative in expected:
+        marker = "ok" if (case_dir / relative).exists() else "missing"
+        rows.append(f"- `{relative}`: {marker}")
+    return tuple(rows)
+
+
 def _read_case_incident(case_dir: Path) -> Incident:
     incident_path = case_dir / "incident.json"
     payload = json.loads(incident_path.read_text(encoding="utf-8"))
@@ -537,6 +762,7 @@ def _read_case_incident(case_dir: Path) -> Incident:
 
 
 def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
+    quality = assess_evidence_quality(incident)
     if not incident.short_description:
         return (
             "Ask the junior to paste the ServiceNow short description. "
@@ -562,6 +788,12 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
             "Create the first evidence item from ServiceNow ticket text. "
             "Add it to `evidence-ledger.json` as EV-001 with source `ServiceNow`, type `ticket`, strength `soft`, "
             "and supports for symptom, impact, or timeline only if the ticket actually contains those facts."
+        )
+    if quality.hard_evidence_count == 0:
+        return (
+            "Collect one hard technical signal for the incident window before choosing a resolution path. "
+            "Use `commands/cloudwatch.md` or `commands/newrelic.md`, paste only the first 20 relevant rows into "
+            "`evidence/query-results/`, then summarize it as a new hard evidence item."
         )
     if "technical evidence" in missing:
         return (

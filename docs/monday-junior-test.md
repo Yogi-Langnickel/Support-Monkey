@@ -34,15 +34,11 @@ Expected result:
 
 Use `examples/monday-test-incident.json` as the sanitized mock ticket.
 
-Copy the useful fields from the mock into:
-
-- `cases/INC-MONDAY-001/incident.json`
-- `cases/INC-MONDAY-001/evidence-ledger.json`
-- `cases/INC-MONDAY-001/worknotes.md`
-
-Then run:
+Import the mock into a case:
 
 ```sh
+PYTHONPATH=src python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
+PYTHONPATH=src python3 -m support_monkey.cli status cases/INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli next cases/INC-MONDAY-001
 PYTHONPATH=src python3 -m support_monkey.cli resolution-gate cases/INC-MONDAY-001/incident.json
 ```
@@ -52,6 +48,8 @@ Expected result:
 - The resolution gate should still block RCA/closure.
 - The next action should ask for hard technical evidence, impact, owner, or
   validation depending on what the tester filled in.
+- `status` should show file health, evidence count, evidence quality, missing
+  evidence classes, and the recommended next action.
 
 ## Junior Observation Checklist
 
