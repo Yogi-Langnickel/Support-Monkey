@@ -5,11 +5,13 @@ from pathlib import Path
 
 from support_monkey.cli import main
 from support_monkey.cases import (
+    add_case_evidence,
     capture_learning_candidate,
     create_incident_case,
     import_incident_case,
     render_case_next_action,
     render_case_status,
+    update_case_context,
 )
 from support_monkey.doctor import render_doctor_report
 from support_monkey.models import Incident
@@ -250,6 +252,115 @@ class TriageTest(unittest.TestCase):
 
     def test_cli_doctor_runs_from_repo_root(self) -> None:
         self.assertEqual(main(["doctor", "--cases-dir", "cases"]), 0)
+
+    def test_update_case_context_refreshes_files_without_manual_editing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC207", cases_dir=Path(temp_dir))
+
+            result = update_case_context(
+                case.case_dir,
+                priority="P2",
+                opened_at="2026-06-01T09:10:00+10:00",
+                short_description="Customer portal 502",
+                description="Call centre reports intermittent 502 during lookup.",
+                caller_notes="Two users reported retries sometimes work.",
+                affected_systems=("customer-portal", "account-bff"),
+                impact_scope="call_centre",
+                impact_depth="partial_outage",
+                affected_users_estimate="2",
+            )
+
+            incident_json = json.loads((case.case_dir / "incident.json").read_text(encoding="utf-8"))
+            impact_markdown = (case.case_dir / "impact.md").read_text(encoding="utf-8")
+            self.assertEqual(result.incident_number, "INC207")
+            self.assertEqual(incident_json["priority"], "P2")
+            self.assertIn("account-bff", incident_json["affectedSystems"])
+            self.assertEqual(incident_json["impact"]["affectedUsersEstimate"], 2)
+            self.assertIn("Scope: call_centre", impact_markdown)
+            self.assertIn("Customer portal 502", (case.case_dir / "incident.md").read_text(encoding="utf-8"))
+            self.assertIn("Case files refreshed automatically", (case.case_dir / "worknotes.md").read_text(encoding="utf-8"))
+
+    def test_add_case_evidence_refreshes_ledger_timeline_and_artifact_instruction(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC208", cases_dir=Path(temp_dir))
+            update_case_context(
+                case.case_dir,
+                short_description="Lookup timeout",
+                description="Ticket has enough intake detail.",
+                opened_at="2026-06-01T09:10:00+10:00",
+                affected_systems=("lookup-api",),
+            )
+
+            result = add_case_evidence(
+                case.case_dir,
+                source="CloudWatch",
+                evidence_type="log",
+                strength="hard",
+                summary="Lookup-api emitted timeout errors during the incident window.",
+                supports=("technical_evidence", "timeline"),
+                confidence="confirmed",
+                observed_at="2026-06-01T09:12:00+10:00",
+                artifact_kind="log",
+                artifact_name="lookup-timeouts.txt",
+                timeline_event="CloudWatch query found lookup timeout errors.",
+            )
+
+            ledger = json.loads((case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
+            timeline = (case.case_dir / "timeline.md").read_text(encoding="utf-8")
+            status = render_case_status(case.case_dir)
+            self.assertEqual(result.evidence_id, "EV-001")
+            self.assertEqual(ledger["items"][0]["type"], "log")
+            self.assertIn("evidence/logs/lookup-timeouts.txt", ledger["items"][0]["artifact"])
+            self.assertIn("Ask the junior to copy the artifact to:", result.artifact_instruction)
+            self.assertIn("CloudWatch query found lookup timeout errors.", timeline)
+            self.assertIn("hard `1`", status)
+
+    def test_cli_update_case_and_add_evidence_avoid_manual_file_edits(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC209", cases_dir=Path(temp_dir))
+
+            update_result = main(
+                [
+                    "update-case",
+                    str(case.case_dir),
+                    "--priority",
+                    "P3",
+                    "--short-description",
+                    "Portal latency",
+                    "--description",
+                    "ServiceNow says lookup is slow.",
+                    "--opened-at",
+                    "2026-06-01T09:00:00+10:00",
+                    "--affected-system",
+                    "portal",
+                    "--impact-scope",
+                    "single_tenant",
+                    "--affected-users-estimate",
+                    "3",
+                ]
+            )
+            evidence_result = main(
+                [
+                    "add-evidence",
+                    str(case.case_dir),
+                    "--source",
+                    "ServiceNow",
+                    "--type",
+                    "ticket",
+                    "--strength",
+                    "soft",
+                    "--summary",
+                    "Ticket reports portal latency.",
+                    "--supports",
+                    "symptom",
+                    "--supports",
+                    "timeline",
+                ]
+            )
+
+            self.assertEqual(update_result, 0)
+            self.assertEqual(evidence_result, 0)
+            self.assertIn("Ticket reports portal latency.", (case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
 
     def test_build_triage_pack_cites_ticket_evidence_and_timeout_hypothesis(self) -> None:
         incident = Incident.from_dict(

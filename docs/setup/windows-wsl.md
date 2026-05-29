@@ -115,13 +115,16 @@ Recommended workflow:
 1. Keep one case folder per incident under `cases/`.
 2. Start new incidents with `support-monkey new-incident <IncidentNumber>`.
 3. Use `support-monkey next cases/<IncidentNumber>` for the next small action.
-4. Store pasted ticket text, log snippets, and command output as local evidence
-   files.
+4. The assistant should run `support-monkey update-case` and
+   `support-monkey add-evidence` to update case files from collected answers.
+   Juniors should not edit generated case files.
 5. Run Support-Monkey commands from the VS Code integrated terminal.
-6. Review Markdown drafts in VS Code preview.
-7. Capture pending learnings with `support-monkey capture-learning
+6. Copy screenshots, log exports, and query result files only into the exact
+   evidence path printed by Support-Monkey.
+7. Review Markdown drafts in VS Code preview.
+8. Capture pending learnings with `support-monkey capture-learning
    cases/<IncidentNumber>` only after reviewing the case.
-8. Manually copy approved text into ServiceNow, Jira, or Slack.
+9. Manually copy approved text into ServiceNow, Jira, or Slack.
 
 Support-Monkey remains draft-only by default. It should not write to workplace
 systems without explicit human approval and a later approved integration.

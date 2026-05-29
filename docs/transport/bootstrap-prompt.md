@@ -60,6 +60,12 @@ Initial MVP:
 14. Capture learnings only as pending candidates with
    `support-monkey capture-learning cases/<IncidentNumber>`; do not promote
    them to durable memory until a senior reviews evidence and redaction.
+15. Do not ask junior engineers to edit generated case files. Collect context in
+   conversation, then run `support-monkey update-case` and
+   `support-monkey add-evidence` to update files automatically.
+16. Juniors may manually copy screenshots, log exports, or query result files
+   into the incident folder only after Support-Monkey gives an exact target
+   path.
 
 First task:
 - Inspect the local Support-Monkey repo.
@@ -69,6 +75,8 @@ First task:
 - Help me configure local read-only connectors safely.
 - Start with `support-monkey new-incident <IncidentNumber>` and
   `support-monkey next cases/<IncidentNumber>`.
+- Use `support-monkey update-case` and `support-monkey add-evidence` for all
+  case-file updates instead of telling the junior to edit files.
 - If a JSON ticket/export is available, use
   `support-monkey import-incident <ticket.json> --overwrite` and then
   `support-monkey status cases/<IncidentNumber>`.

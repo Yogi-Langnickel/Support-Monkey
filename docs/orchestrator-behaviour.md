@@ -119,6 +119,18 @@ The junior's next guided action is:
 support-monkey next cases/<IncidentNumber>
 ```
 
+Do not ask juniors to edit case files. The assistant should collect answers in
+conversation and run:
+
+```sh
+support-monkey update-case cases/<IncidentNumber> ...
+support-monkey add-evidence cases/<IncidentNumber> ...
+```
+
+Manual junior work should be limited to providing answers and copying external
+screenshots, log exports, or query result files into the exact evidence path
+printed by Support-Monkey.
+
 `worknotes.md` is the primary operational artifact. It should stay
 timestamped, factual, and easy to copy into ServiceNow.
 

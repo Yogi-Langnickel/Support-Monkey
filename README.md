@@ -52,6 +52,8 @@ python3 -m support_monkey.cli doctor
 python3 -m support_monkey.cli new-incident INC0012345
 python3 -m support_monkey.cli import-incident examples/monday-test-incident.json --overwrite
 python3 -m support_monkey.cli status cases/INC-MONDAY-001
+python3 -m support_monkey.cli update-case cases/INC-MONDAY-001 --priority P2 --affected-system customer-portal
+python3 -m support_monkey.cli add-evidence cases/INC-MONDAY-001 --source ServiceNow --type ticket --strength soft --summary "Ticket reports intermittent 502 errors." --supports symptom
 python3 -m support_monkey.cli next cases/INC0012345
 python3 -m support_monkey.cli capture-learning cases/INC0012345
 python3 -m support_monkey.cli triage examples/incident.sample.json
@@ -69,6 +71,10 @@ the quickest path for Monday mock testing. `status` shows file health, evidence
 quality, missing evidence classes, and the recommended next step.
 `next` reads the case and gives the junior engineer one small investigation
 action with guardrails and a copy-ready worknote stub.
+`update-case` and `add-evidence` are assistant-facing commands: the assistant
+collects answers from the junior, updates the case files, refreshes derived
+Markdown, and prints exact artifact-copy instructions when screenshots or log
+exports need to be placed in the incident folder.
 
 `capture-learning` writes a pending learning candidate under
 `.support-monkey/learnings/pending/`. Treat it as an inbox only: a senior must
@@ -108,10 +114,12 @@ It also reports a data quality score so soft-only investigations are flagged as
 high risk even when all required fields appear to be filled.
 
 The `new-incident` and `next` commands are the first junior-support workflow.
-They intentionally keep the process manual and local: the junior pastes
-ServiceNow details, log outputs, query results, screenshots, and local repo
-findings into the case folder. API integrations should come after this workflow
-is reliable under incident pressure.
+They intentionally keep the process local, but not file-editing based: the
+assistant asks for ServiceNow details, log outputs, query results, screenshots,
+and local repo findings, then runs `update-case` and `add-evidence` so generated
+case files stay consistent. Juniors may still need to copy screenshots or log
+exports into the exact evidence folder named by Support-Monkey. API integrations
+should come after this workflow is reliable under incident pressure.
 
 `capture-learning` is the first learning loop. It creates a reviewed-learning
 candidate from a case folder without auto-updating memory, because early

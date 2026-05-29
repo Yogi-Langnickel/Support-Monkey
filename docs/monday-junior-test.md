@@ -10,7 +10,7 @@ Confirm that a junior can:
 - create a local case folder,
 - understand the next small action,
 - copy a factual worknote,
-- add or identify first evidence,
+- provide answers and evidence context without editing case files,
 - avoid premature root-cause language,
 - understand when escalation or more evidence is needed.
 
@@ -31,6 +31,7 @@ Expected result:
 - `doctor` reports `Status: ready`.
 - `worknotes.md` has copy-ready worknote text.
 - `next` asks for the ServiceNow short description first.
+- The junior did not edit any case file manually.
 
 ## Mock ServiceNow Input
 
@@ -53,11 +54,59 @@ Expected result:
 - `status` should show file health, evidence count, evidence quality, missing
   evidence classes, and the recommended next action.
 
+## Assistant-Owned Case Updates
+
+The junior should not edit `incident.json`, `evidence-ledger.json`, `worknotes.md`,
+or any generated Markdown file. The assistant collects answers in the chat and
+runs commands to update the case.
+
+Example context update:
+
+```sh
+PYTHONPATH=src python3 -m support_monkey.cli update-case cases/INC-MONDAY-001 \
+  --priority P2 \
+  --opened-at 2026-06-01T09:10:00+10:00 \
+  --short-description "Customer portal intermittently returns 502 during account lookup" \
+  --description "Call-centre users report intermittent lookup failures. Some retries succeed." \
+  --caller-notes "Two users reported 502 around 09:05-09:10." \
+  --affected-system customer-portal \
+  --affected-system account-bff \
+  --impact-scope call_centre \
+  --impact-depth partial_outage \
+  --affected-users-estimate 2
+```
+
+Example evidence capture:
+
+```sh
+PYTHONPATH=src python3 -m support_monkey.cli add-evidence cases/INC-MONDAY-001 \
+  --source CloudWatch \
+  --type log \
+  --strength hard \
+  --confidence confirmed \
+  --observed-at 2026-06-01T09:12:00+10:00 \
+  --supports technical_evidence \
+  --supports timeline \
+  --summary "Customer profile API emitted 502 timeout errors during the incident window." \
+  --artifact-kind log \
+  --artifact-name customer-profile-api-502.txt \
+  --timeline-event "CloudWatch query found customer profile API 502 timeout errors."
+```
+
+Expected result:
+
+- Support-Monkey updates `incident.json`, `evidence-ledger.json`, `incident.md`,
+  `timeline.md`, `impact.md`, `resolution-gate.md`, and `worknotes.md`.
+- If an artifact name is provided, Support-Monkey prints the exact folder path
+  where the junior should copy the screenshot, log export, or query result.
+- The junior only copies external artifacts into the instructed folder. They do
+  not edit case files.
+
 ## Junior Observation Checklist
 
 During the test, watch for:
 
-- Did the junior know which file to edit?
+- Did the junior avoid editing case files?
 - Did `next` give a small enough action?
 - Did the junior paste too much sensitive data?
 - Did the junior understand hard versus soft evidence?
@@ -97,7 +146,7 @@ For the Monday pilot, this is enough:
 
 - The junior can create a case.
 - The junior can run `next`.
-- The junior can update `worknotes.md`.
+- The assistant can update case files from the junior's answers.
 - The junior understands that ServiceNow ticket text is soft evidence.
 - The junior does not claim root cause from the mock ticket alone.
 - The junior knows what hard evidence to collect next.
@@ -110,4 +159,5 @@ Pause the rollout if:
 - worknotes are too vague for ServiceNow,
 - `next` repeatedly asks for the wrong thing,
 - command templates encourage unsafe production actions,
-- testers cannot tell where evidence should be stored.
+- testers cannot tell where external evidence artifacts should be copied,
+- the assistant asks juniors to manually edit generated case files.

@@ -6,11 +6,13 @@ from pathlib import Path
 import sys
 
 from .cases import (
+    add_case_evidence,
     capture_learning_candidate,
     create_incident_case,
     import_incident_case,
     render_case_next_action,
     render_case_status,
+    update_case_context,
 )
 from .doctor import doctor_checks_ready, render_doctor_report, run_doctor_checks
 from .models import Incident
@@ -67,6 +69,40 @@ def main(argv: list[str] | None = None) -> int:
     )
     status_parser.add_argument("case", type=Path)
 
+    update_parser = subparsers.add_parser(
+        "update-case",
+        help="Let the assistant update case files from collected user context.",
+    )
+    update_parser.add_argument("case", type=Path)
+    update_parser.add_argument("--priority", default="")
+    update_parser.add_argument("--opened-at", default="")
+    update_parser.add_argument("--short-description", default="")
+    update_parser.add_argument("--description", default="")
+    update_parser.add_argument("--caller-notes", default="")
+    update_parser.add_argument("--affected-system", action="append", default=[])
+    update_parser.add_argument("--impact-scope", default="")
+    update_parser.add_argument("--impact-depth", default="")
+    update_parser.add_argument("--affected-users-estimate", default="")
+    update_parser.add_argument("--impact-evidence-id", action="append", default=[])
+
+    evidence_parser = subparsers.add_parser(
+        "add-evidence",
+        help="Let the assistant append evidence and refresh case files.",
+    )
+    evidence_parser.add_argument("case", type=Path)
+    evidence_parser.add_argument("--source", required=True)
+    evidence_parser.add_argument("--type", required=True, dest="evidence_type")
+    evidence_parser.add_argument("--strength", required=True)
+    evidence_parser.add_argument("--summary", required=True)
+    evidence_parser.add_argument("--reference", default="")
+    evidence_parser.add_argument("--supports", action="append", default=[])
+    evidence_parser.add_argument("--confidence", default="unverified")
+    evidence_parser.add_argument("--observed-at", default="")
+    evidence_parser.add_argument("--evidence-id", default="")
+    evidence_parser.add_argument("--artifact-kind", default="")
+    evidence_parser.add_argument("--artifact-name", default="")
+    evidence_parser.add_argument("--timeline-event", default="")
+
     learn_parser = subparsers.add_parser(
         "capture-learning",
         help="Create a human-reviewed learning candidate from a case folder.",
@@ -117,6 +153,36 @@ def main(argv: list[str] | None = None) -> int:
         return _next(args.case)
     if args.command == "status":
         return _status(args.case)
+    if args.command == "update-case":
+        return _update_case(
+            args.case,
+            priority=args.priority,
+            opened_at=args.opened_at,
+            short_description=args.short_description,
+            description=args.description,
+            caller_notes=args.caller_notes,
+            affected_systems=tuple(args.affected_system),
+            impact_scope=args.impact_scope,
+            impact_depth=args.impact_depth,
+            affected_users_estimate=args.affected_users_estimate,
+            impact_evidence_ids=tuple(args.impact_evidence_id),
+        )
+    if args.command == "add-evidence":
+        return _add_evidence(
+            args.case,
+            source=args.source,
+            evidence_type=args.evidence_type,
+            strength=args.strength,
+            reference=args.reference,
+            summary=args.summary,
+            supports=tuple(args.supports),
+            confidence=args.confidence,
+            observed_at=args.observed_at,
+            evidence_id=args.evidence_id,
+            artifact_kind=args.artifact_kind,
+            artifact_name=args.artifact_name,
+            timeline_event=args.timeline_event,
+        )
     if args.command == "capture-learning":
         return _capture_learning(args.case, learnings_dir=args.learnings_dir)
     if args.command == "questions":
@@ -201,6 +267,90 @@ def _status(case_path: Path) -> int:
     except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 2
+    return 0
+
+
+def _update_case(
+    case_path: Path,
+    *,
+    priority: str,
+    opened_at: str,
+    short_description: str,
+    description: str,
+    caller_notes: str,
+    affected_systems: tuple[str, ...],
+    impact_scope: str,
+    impact_depth: str,
+    affected_users_estimate: str,
+    impact_evidence_ids: tuple[str, ...],
+) -> int:
+    try:
+        result = update_case_context(
+            case_path,
+            priority=priority,
+            opened_at=opened_at,
+            short_description=short_description,
+            description=description,
+            caller_notes=caller_notes,
+            affected_systems=affected_systems,
+            impact_scope=impact_scope,
+            impact_depth=impact_depth,
+            affected_users_estimate=affected_users_estimate,
+            impact_evidence_ids=impact_evidence_ids,
+        )
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    print(f"Updated case context for {result.incident_number}: {result.case_dir}")
+    print("Updated files:")
+    for path in result.updated_files:
+        print(f"- {path.relative_to(result.case_dir)}")
+    print(f"\nNext: support-monkey next {result.case_dir}")
+    return 0
+
+
+def _add_evidence(
+    case_path: Path,
+    *,
+    source: str,
+    evidence_type: str,
+    strength: str,
+    reference: str,
+    summary: str,
+    supports: tuple[str, ...],
+    confidence: str,
+    observed_at: str,
+    evidence_id: str,
+    artifact_kind: str,
+    artifact_name: str,
+    timeline_event: str,
+) -> int:
+    try:
+        result = add_case_evidence(
+            case_path,
+            source=source,
+            evidence_type=evidence_type,
+            strength=strength,
+            reference=reference,
+            summary=summary,
+            supports=supports,
+            confidence=confidence,
+            observed_at=observed_at,
+            evidence_id=evidence_id,
+            artifact_kind=artifact_kind,
+            artifact_name=artifact_name,
+            timeline_event=timeline_event,
+        )
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+    print(f"Added evidence {result.evidence_id} to {result.incident_number}: {result.case_dir}")
+    print("Updated files:")
+    for path in result.updated_files:
+        print(f"- {path.relative_to(result.case_dir)}")
+    if result.artifact_instruction:
+        print(f"\nArtifact: {result.artifact_instruction}")
+    print(f"\nNext: support-monkey next {result.case_dir}")
     return 0
 
 

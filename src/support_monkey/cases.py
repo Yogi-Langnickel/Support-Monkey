@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 
 from .models import Incident
-from .resolution import assess_evidence_quality, classify_resolution_state
+from .resolution import assess_evidence_quality, classify_resolution_state, render_resolution_gate_markdown
 
 
 INCIDENT_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -33,6 +33,23 @@ class CaseImportResult:
     created_files: tuple[Path, ...]
     existing_files: tuple[Path, ...]
     overwritten_files: tuple[Path, ...]
+
+
+@dataclass(frozen=True)
+class CaseUpdateResult:
+    case_dir: Path
+    incident_number: str
+    updated_files: tuple[Path, ...]
+    worknote: str
+
+
+@dataclass(frozen=True)
+class EvidenceAddResult:
+    case_dir: Path
+    incident_number: str
+    evidence_id: str
+    updated_files: tuple[Path, ...]
+    artifact_instruction: str
 
 
 def create_incident_case(
@@ -93,7 +110,7 @@ def render_case_next_action(case_path: Path) -> str:
         "## Guardrails",
         "- Keep the action read-only unless a senior explicitly approves a write.",
         "- Paste only the minimum output needed; redact secrets, tokens, customer PII, and internal URLs when possible.",
-        "- If the requested data is unavailable, write the exact blocker in `worknotes.md`.",
+        "- If the requested data is unavailable, ask the assistant to record the exact blocker in the case files.",
         "- Do not claim root cause yet unless the resolution gate says the case is ready for human review.",
         "",
         "## Copy-Ready Worknote Stub",
@@ -178,6 +195,164 @@ def render_case_status(case_path: Path) -> str:
     return "\n".join(lines).strip() + "\n"
 
 
+def update_case_context(
+    case_path: Path,
+    *,
+    priority: str = "",
+    opened_at: str = "",
+    short_description: str = "",
+    description: str = "",
+    caller_notes: str = "",
+    affected_systems: tuple[str, ...] = (),
+    impact_scope: str = "",
+    impact_depth: str = "",
+    affected_users_estimate: str = "",
+    impact_evidence_ids: tuple[str, ...] = (),
+    now: datetime | None = None,
+) -> CaseUpdateResult:
+    case_dir = _resolve_case_dir(case_path)
+    payload = _read_case_payload(case_dir)
+
+    _set_if_present(payload, "priority", priority)
+    _set_if_present(payload, "openedAt", opened_at)
+    _set_if_present(payload, "shortDescription", short_description)
+    _set_if_present(payload, "description", description)
+    _set_if_present(payload, "callerNotes", caller_notes)
+    if affected_systems:
+        existing = [str(item).strip() for item in payload.get("affectedSystems", []) if str(item).strip()]
+        for system in affected_systems:
+            value = system.strip()
+            if value and value not in existing:
+                existing.append(value)
+        payload["affectedSystems"] = existing
+    if impact_scope.strip() or impact_depth.strip() or affected_users_estimate.strip() or impact_evidence_ids:
+        impact = payload.get("impact")
+        if not isinstance(impact, dict):
+            impact = {}
+        impact = dict(impact)
+        _set_if_present(impact, "scope", impact_scope)
+        _set_if_present(impact, "depth", impact_depth)
+        if affected_users_estimate.strip():
+            try:
+                impact["affectedUsersEstimate"] = int(affected_users_estimate.strip())
+            except ValueError as error:
+                raise ValueError("affected users estimate must be a number") from error
+        if impact_evidence_ids:
+            existing_ids = [str(item).strip() for item in impact.get("evidenceIds", []) if str(item).strip()]
+            for evidence_id in impact_evidence_ids:
+                value = evidence_id.strip()
+                if value and value not in existing_ids:
+                    existing_ids.append(value)
+            impact["evidenceIds"] = existing_ids
+        payload["impact"] = impact
+
+    timestamp = _iso_now(now)
+    incident = Incident.from_dict(payload)
+    fields = _context_field_summary(
+        priority=priority,
+        opened_at=opened_at,
+        short_description=short_description,
+        description=description,
+        caller_notes=caller_notes,
+        affected_systems=affected_systems,
+        impact_scope=impact_scope,
+        impact_depth=impact_depth,
+        affected_users_estimate=affected_users_estimate,
+        impact_evidence_ids=impact_evidence_ids,
+    )
+    worknote = (
+        f"[{timestamp}] Support-Monkey updated incident context from collected user input.\n"
+        f"Result: {fields}.\n"
+        "Outcome: Case files refreshed automatically; no manual case-file editing required.\n"
+        "Next: Run support-monkey next for the next bounded investigation action."
+    )
+    updated = _write_case_state(case_dir, payload, incident=incident)
+    _append_worknote(case_dir, worknote)
+    return CaseUpdateResult(
+        case_dir=case_dir,
+        incident_number=incident.number,
+        updated_files=updated + (case_dir / "worknotes.md",),
+        worknote=worknote,
+    )
+
+
+def add_case_evidence(
+    case_path: Path,
+    *,
+    source: str,
+    evidence_type: str,
+    strength: str,
+    reference: str = "",
+    summary: str,
+    supports: tuple[str, ...] = (),
+    confidence: str = "unverified",
+    observed_at: str = "",
+    evidence_id: str = "",
+    artifact_kind: str = "",
+    artifact_name: str = "",
+    timeline_event: str = "",
+    now: datetime | None = None,
+) -> EvidenceAddResult:
+    case_dir = _resolve_case_dir(case_path)
+    payload = _read_case_payload(case_dir)
+    ledger = _read_evidence_ledger(case_dir, incident_number=str(payload.get("number", "UNKNOWN")))
+    items = ledger.setdefault("items", [])
+    if not isinstance(items, list):
+        raise ValueError("evidence-ledger.json items must be a list")
+
+    new_id = evidence_id.strip() or _next_evidence_id(items)
+    artifact_instruction = _artifact_instruction(case_dir, artifact_kind=artifact_kind, artifact_name=artifact_name)
+    if artifact_name and not reference:
+        reference = _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
+
+    item = {
+        "id": new_id,
+        "source": source.strip() or "unknown",
+        "type": evidence_type.strip().lower() or "unknown",
+        "strength": strength.strip().lower() or "unknown",
+        "reference": reference.strip() or "n/a",
+        "confidence": confidence.strip().lower() or "unverified",
+        "supports": [value.strip() for value in supports if value.strip()],
+        "summary": summary.strip() or "No summary provided.",
+    }
+    if observed_at.strip():
+        item["observedAt"] = observed_at.strip()
+    if artifact_kind.strip() and artifact_name.strip():
+        item["artifact"] = _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
+
+    items.append(item)
+    payload["evidence"] = items
+    if timeline_event.strip():
+        timeline = payload.setdefault("timeline", [])
+        if not isinstance(timeline, list):
+            raise ValueError("incident.json timeline must be a list")
+        timeline.append(
+            {
+                "occurredAt": observed_at.strip() or _iso_now(now),
+                "summary": timeline_event.strip(),
+                "evidenceId": new_id,
+            }
+        )
+
+    incident = Incident.from_dict(payload)
+    updated = _write_case_state(case_dir, payload, ledger=ledger, incident=incident)
+    timestamp = _iso_now(now)
+    worknote = (
+        f"[{timestamp}] Support-Monkey recorded evidence {new_id} from collected user input.\n"
+        f"Result: {item['source']} {item['type']} evidence captured with strength={item['strength']}; reference={item['reference']}.\n"
+        "Outcome: Evidence ledger and derived case files refreshed automatically.\n"
+        "Next: Run support-monkey next to continue the investigation."
+    )
+    _append_worknote(case_dir, worknote)
+    return EvidenceAddResult(
+        case_dir=case_dir,
+        incident_number=incident.number,
+        evidence_id=new_id,
+        updated_files=updated + (case_dir / "worknotes.md",),
+        artifact_instruction=artifact_instruction,
+    )
+
+
 def capture_learning_candidate(
     case_path: Path,
     *,
@@ -259,6 +434,155 @@ def _case_files(incident_number: str, created_at: str) -> dict[str, str]:
         "final-summary.md": _final_summary_markdown(incident_number),
         "branches.md": _branches_markdown(incident_number),
     }
+
+
+def _set_if_present(payload: dict[str, object], key: str, value: str) -> None:
+    if value.strip():
+        payload[key] = value.strip()
+
+
+def _context_field_summary(
+    *,
+    priority: str,
+    opened_at: str,
+    short_description: str,
+    description: str,
+    caller_notes: str,
+    affected_systems: tuple[str, ...],
+    impact_scope: str,
+    impact_depth: str,
+    affected_users_estimate: str,
+    impact_evidence_ids: tuple[str, ...],
+) -> str:
+    labels = []
+    if priority.strip():
+        labels.append("priority")
+    if opened_at.strip():
+        labels.append("opened time")
+    if short_description.strip():
+        labels.append("short description")
+    if description.strip():
+        labels.append("description")
+    if caller_notes.strip():
+        labels.append("caller notes")
+    if affected_systems:
+        labels.append("affected systems")
+    if impact_scope.strip():
+        labels.append("impact scope")
+    if impact_depth.strip():
+        labels.append("impact depth")
+    if affected_users_estimate.strip():
+        labels.append("affected users estimate")
+    if impact_evidence_ids:
+        labels.append("impact evidence IDs")
+    return ", ".join(labels) if labels else "no populated fields supplied"
+
+
+def _read_case_payload(case_dir: Path) -> dict[str, object]:
+    incident_path = case_dir / "incident.json"
+    payload = json.loads(incident_path.read_text(encoding="utf-8"))
+    if not isinstance(payload, dict):
+        raise ValueError(f"incident JSON must be an object: {incident_path}")
+    ledger = _read_evidence_ledger(case_dir, incident_number=str(payload.get("number", "UNKNOWN")))
+    items = ledger.get("items", [])
+    if isinstance(items, list):
+        payload["evidence"] = items
+    return payload
+
+
+def _read_evidence_ledger(case_dir: Path, *, incident_number: str) -> dict[str, object]:
+    ledger_path = case_dir / "evidence-ledger.json"
+    if not ledger_path.exists():
+        return {"incidentNumber": incident_number, "items": []}
+    ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
+    if not isinstance(ledger, dict):
+        raise ValueError(f"evidence ledger must be an object: {ledger_path}")
+    ledger.setdefault("incidentNumber", incident_number)
+    ledger.setdefault("items", [])
+    return ledger
+
+
+def _write_case_state(
+    case_dir: Path,
+    payload: dict[str, object],
+    *,
+    ledger: dict[str, object] | None = None,
+    incident: Incident | None = None,
+) -> tuple[Path, ...]:
+    incident = incident or Incident.from_dict(payload)
+    if ledger is None:
+        ledger = {
+            "incidentNumber": incident.number,
+            "items": list(payload.get("evidence", [])) if isinstance(payload.get("evidence"), list) else [],
+        }
+    payload = dict(payload)
+    payload["number"] = incident.number
+    payload["evidence"] = ledger.get("items", [])
+
+    writes = {
+        "incident.json": json.dumps(payload, indent=2) + "\n",
+        "evidence-ledger.json": json.dumps(ledger, indent=2) + "\n",
+        "incident.md": _incident_markdown_from_incident(incident),
+        "timeline.md": _timeline_markdown_from_incident(incident),
+        "impact.md": _impact_markdown_from_incident(incident),
+        "resolution-gate.md": render_resolution_gate_markdown(incident),
+    }
+    updated: list[Path] = []
+    for relative, content in writes.items():
+        path = case_dir / relative
+        path.write_text(content, encoding="utf-8")
+        updated.append(path)
+    return tuple(updated)
+
+
+def _append_worknote(case_dir: Path, entry: str) -> None:
+    path = case_dir / "worknotes.md"
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write("\n```text\n")
+        handle.write(entry.strip())
+        handle.write("\n```\n")
+
+
+def _next_evidence_id(items: list[object]) -> str:
+    highest = 0
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        raw = str(item.get("id") or item.get("evidenceId") or "")
+        match = re.match(r"^EV-(\d+)$", raw)
+        if match:
+            highest = max(highest, int(match.group(1)))
+    return f"EV-{highest + 1:03d}"
+
+
+def _artifact_reference(*, artifact_kind: str, artifact_name: str) -> str:
+    directory = _artifact_directory_name(artifact_kind)
+    return f"evidence/{directory}/{artifact_name.strip()}"
+
+
+def _artifact_instruction(case_dir: Path, *, artifact_kind: str, artifact_name: str) -> str:
+    if not artifact_name.strip():
+        return ""
+    target = case_dir / _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
+    if target.exists():
+        return f"Artifact already present: {target}"
+    return f"Ask the junior to copy the artifact to: {target}"
+
+
+def _artifact_directory_name(artifact_kind: str) -> str:
+    normalized = artifact_kind.strip().lower().replace("_", "-")
+    mapping = {
+        "screenshot": "screenshots",
+        "screenshots": "screenshots",
+        "log": "logs",
+        "logs": "logs",
+        "export": "exports",
+        "exports": "exports",
+        "query": "query-results",
+        "query-result": "query-results",
+        "query-results": "query-results",
+    }
+    return mapping.get(normalized, "exports")
 
 
 def _case_incident_payload(
@@ -469,6 +793,25 @@ Use ISO 8601 timestamps and cite an evidence ID for every row.
 """
 
 
+def _timeline_markdown_from_incident(incident: Incident) -> str:
+    lines = [
+        "# Timeline",
+        "",
+        "Use ISO 8601 timestamps and cite an evidence ID for every row.",
+        "",
+        "| Timestamp | Event | Evidence ID |",
+        "| --- | --- | --- |",
+    ]
+    if incident.timeline:
+        for entry in incident.timeline:
+            lines.append(
+                f"| {entry.occurred_at or 'unknown'} | {entry.summary} | {entry.evidence_id or 'pending'} |"
+            )
+    else:
+        lines.append("| pending | pending | pending |")
+    return "\n".join(lines).strip() + "\n"
+
+
 def _impact_markdown() -> str:
     return """# Impact Analysis
 
@@ -480,6 +823,31 @@ def _impact_markdown() -> str:
 - Business function affected: unknown
 - Data/payment/security risk: unknown
 - Evidence IDs: pending
+
+## Questions To Close
+
+- Who is affected?
+- How many users, customers, tenants, orders, messages, or records are affected?
+- Since when?
+- Is there a workaround?
+- Is the issue active now?
+"""
+
+
+def _impact_markdown_from_incident(incident: Incident) -> str:
+    impact = incident.impact
+    affected = impact.affected_users_estimate if impact.affected_users_estimate is not None else "unknown"
+    evidence = ", ".join(impact.evidence_ids) if impact.evidence_ids else "pending"
+    return f"""# Impact Analysis
+
+## Current Impact
+
+- Scope: {impact.scope}
+- Depth: {impact.depth}
+- Affected users / tenants: {affected}
+- Business function affected: unknown
+- Data/payment/security risk: unknown
+- Evidence IDs: {evidence}
 
 ## Questions To Close
 
@@ -786,25 +1154,25 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
     if not incident.evidence:
         return (
             "Create the first evidence item from ServiceNow ticket text. "
-            "Add it to `evidence-ledger.json` as EV-001 with source `ServiceNow`, type `ticket`, strength `soft`, "
-            "and supports for symptom, impact, or timeline only if the ticket actually contains those facts."
+            "The assistant should run `support-monkey add-evidence` with source `ServiceNow`, type `ticket`, "
+            "strength `soft`, and supports for symptom, impact, or timeline only if the ticket actually contains those facts."
         )
     if quality.hard_evidence_count == 0:
         return (
             "Collect one hard technical signal for the incident window before choosing a resolution path. "
-            "Use `commands/cloudwatch.md` or `commands/newrelic.md`, paste only the first 20 relevant rows into "
-            "`evidence/query-results/`, then summarize it as a new hard evidence item."
+            "Use `commands/cloudwatch.md` or `commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
+            "with `support-monkey add-evidence`. If there is an exported file, copy it only to the artifact path printed by Support-Monkey."
         )
     if "technical evidence" in missing:
         return (
             "Collect one hard technical signal for the incident window. "
-            "Use `commands/cloudwatch.md` or `commands/newrelic.md`, paste only the first 20 relevant rows into "
-            "`evidence/query-results/`, then summarize it as a new hard evidence item."
+            "Use `commands/cloudwatch.md` or `commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
+            "with `support-monkey add-evidence`. If there is an exported file, copy it only to the artifact path printed by Support-Monkey."
         )
     if "impact" in missing:
         return (
             "Quantify impact. Ask for affected users, tenants, orders, messages, market/channel, and whether the issue is still active. "
-            "Update `impact.md` and cite evidence IDs."
+            "The assistant should update the case files and cite evidence IDs; the junior should not edit `impact.md` manually."
         )
     if "owner" in missing:
         return (
@@ -813,13 +1181,13 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
         )
     if "resolution path" in missing:
         return (
-            "Document the current resolution path: workaround, rollback, vendor escalation, hotfix, monitoring-only closure, "
-            "or Problem Record candidate. Do not mark resolved without validation."
+            "Ask for the current resolution path: workaround, rollback, vendor escalation, hotfix, monitoring-only closure, "
+            "or Problem Record candidate. The assistant should record it with `support-monkey add-evidence`; do not mark resolved without validation."
         )
     if "validation" in missing:
         return (
             "Validate the workaround or fix with one named pattern: synthetic, log_based, metric_based, deployment_based, or user_based. "
-            "Add the validation evidence before closure."
+            "The assistant should record validation evidence with `support-monkey add-evidence` before closure."
         )
     return (
         "Run the resolution gate and prepare a human review package. "
@@ -833,7 +1201,7 @@ def _worknote_stub(action: str) -> str:
         f"Action: {action}\n"
         "Result: pending.\n"
         "Outcome: no root cause or resolution claim made yet.\n"
-        "Next: update this note after the action is completed."
+        "Next: ask the assistant to record the result after the action is completed."
     )
 
 
