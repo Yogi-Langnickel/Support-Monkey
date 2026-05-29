@@ -20,6 +20,12 @@ class CaseCreationResult:
     existing_files: tuple[Path, ...]
 
 
+@dataclass(frozen=True)
+class LearningCaptureResult:
+    learning_path: Path
+    incident_number: str
+
+
 def create_incident_case(
     incident_number: str,
     *,
@@ -87,6 +93,22 @@ def render_case_next_action(case_path: Path) -> str:
         "```",
     ]
     return "\n".join(lines).strip() + "\n"
+
+
+def capture_learning_candidate(
+    case_path: Path,
+    *,
+    learnings_dir: Path = Path(".support-monkey/learnings/pending"),
+    now: datetime | None = None,
+) -> LearningCaptureResult:
+    case_dir = _resolve_case_dir(case_path)
+    incident = _read_case_incident(case_dir)
+    timestamp = _iso_now(now)
+    learnings_dir.mkdir(parents=True, exist_ok=True)
+    safe_timestamp = timestamp.replace(":", "").replace("-", "")
+    path = learnings_dir / f"{incident.number}-{safe_timestamp}.md"
+    path.write_text(_learning_candidate_markdown(incident, case_dir, timestamp), encoding="utf-8")
+    return LearningCaptureResult(learning_path=path, incident_number=incident.number)
 
 
 def _normalize_incident_number(value: str) -> str:
@@ -581,3 +603,68 @@ def _worknote_stub(action: str) -> str:
         "Outcome: no root cause or resolution claim made yet.\n"
         "Next: update this note after the action is completed."
     )
+
+
+def _learning_candidate_markdown(incident: Incident, case_dir: Path, created_at: str) -> str:
+    quality = assess_evidence_quality(incident)
+    state, missing = classify_resolution_state(incident)
+    evidence_count = len(incident.evidence)
+    hard_count = quality.hard_evidence_count
+    soft_count = quality.soft_evidence_count
+    missing_text = ", ".join(missing) if missing else "none"
+    affected = ", ".join(incident.affected_systems) if incident.affected_systems else "unknown"
+    return f"""# Learning Candidate: {incident.number}
+
+Status: PENDING HUMAN REVIEW
+Created: {created_at}
+Case folder: {case_dir}
+
+Do not promote this into durable Support-Monkey memory until a senior reviews
+the evidence and removes sensitive details.
+
+## Incident Snapshot
+
+- Priority: {incident.priority}
+- Short description: {incident.short_description or "not provided"}
+- Affected systems: {affected}
+- Resolution gate: {state}
+- Evidence quality: {quality.score}/100 ({quality.risk})
+- Evidence items: {evidence_count}
+- Hard evidence items: {hard_count}
+- Soft evidence items: {soft_count}
+- Missing evidence classes: {missing_text}
+
+## Candidate Learning
+
+Write the reusable lesson here after review. Keep it general enough to help the
+next incident without exposing customer data, secrets, hostnames, account IDs,
+or internal URLs.
+
+## Evidence That Supports The Learning
+
+List evidence IDs and short summaries. Do not paste raw sensitive logs.
+
+## Applicability
+
+- Services / repo patterns:
+- Error signatures:
+- Safe next checks:
+- Known workaround:
+- Validation pattern:
+
+## Review Checklist
+
+- [ ] Root cause is supported or phrased as a hypothesis.
+- [ ] Sensitive data removed.
+- [ ] Vendor/team blame is evidence-backed or removed.
+- [ ] The lesson is reusable.
+- [ ] The lesson does not conflict with runbooks or known ownership.
+- [ ] A senior approved promotion to durable memory.
+
+## Promotion Decision
+
+- Decision: pending
+- Reviewer:
+- Reviewed at:
+- Destination:
+"""

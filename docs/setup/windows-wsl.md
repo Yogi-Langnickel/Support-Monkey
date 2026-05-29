@@ -70,6 +70,7 @@ Run the current offline helpers:
 ```sh
 support-monkey new-incident INC0012345
 support-monkey next cases/INC0012345
+support-monkey capture-learning cases/INC0012345
 support-monkey triage examples/incident.sample.json
 support-monkey questions examples/incident.sample.json
 support-monkey resolution-gate examples/incident.sample.json
@@ -80,6 +81,7 @@ If the console script is not installed yet, run with `PYTHONPATH`:
 ```sh
 PYTHONPATH=src python3 -m support_monkey.cli new-incident INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli next cases/INC0012345
+PYTHONPATH=src python3 -m support_monkey.cli capture-learning cases/INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli triage examples/incident.sample.json
 PYTHONPATH=src python3 -m support_monkey.cli questions examples/incident.sample.json
 PYTHONPATH=src python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
@@ -111,7 +113,9 @@ Recommended workflow:
    files.
 5. Run Support-Monkey commands from the VS Code integrated terminal.
 6. Review Markdown drafts in VS Code preview.
-7. Manually copy approved text into ServiceNow, Jira, or Slack.
+7. Capture pending learnings with `support-monkey capture-learning
+   cases/<IncidentNumber>` only after reviewing the case.
+8. Manually copy approved text into ServiceNow, Jira, or Slack.
 
 Support-Monkey remains draft-only by default. It should not write to workplace
 systems without explicit human approval and a later approved integration.

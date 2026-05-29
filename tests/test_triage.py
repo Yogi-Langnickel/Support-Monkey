@@ -4,7 +4,11 @@ import unittest
 from pathlib import Path
 
 from support_monkey.cli import main
-from support_monkey.cases import create_incident_case, render_case_next_action
+from support_monkey.cases import (
+    capture_learning_candidate,
+    create_incident_case,
+    render_case_next_action,
+)
 from support_monkey.models import Incident
 from support_monkey.questions import generate_clarification_questions
 from support_monkey.resolution import (
@@ -106,6 +110,49 @@ class TriageTest(unittest.TestCase):
 
             self.assertIn("Collect one hard technical signal", markdown)
             self.assertIn("commands/cloudwatch.md", markdown)
+
+    def test_capture_learning_creates_pending_human_review_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_dir = Path(temp_dir)
+            result = create_incident_case("INC203", cases_dir=base_dir / "cases")
+            incident_path = result.case_dir / "incident.json"
+            payload = json.loads(incident_path.read_text(encoding="utf-8"))
+            payload.update(
+                {
+                    "priority": "P2",
+                    "shortDescription": "Checkout timeout",
+                    "affectedSystems": ["checkout-service"],
+                }
+            )
+            incident_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+
+            learning = capture_learning_candidate(
+                result.case_dir,
+                learnings_dir=base_dir / "learnings" / "pending",
+            )
+
+            content = learning.learning_path.read_text(encoding="utf-8")
+            self.assertEqual(learning.incident_number, "INC203")
+            self.assertIn("Status: PENDING HUMAN REVIEW", content)
+            self.assertIn("Do not promote", content)
+            self.assertIn("checkout-service", content)
+
+    def test_cli_capture_learning_creates_pending_candidate(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            base_dir = Path(temp_dir)
+            case = create_incident_case("INC204", cases_dir=base_dir / "cases")
+
+            result = main(
+                [
+                    "capture-learning",
+                    str(case.case_dir),
+                    "--learnings-dir",
+                    str(base_dir / "learnings" / "pending"),
+                ]
+            )
+
+            self.assertEqual(result, 0)
+            self.assertTrue(list((base_dir / "learnings" / "pending").glob("INC204-*.md")))
 
     def test_build_triage_pack_cites_ticket_evidence_and_timeout_hypothesis(self) -> None:
         incident = Incident.from_dict(

@@ -57,6 +57,9 @@ Initial MVP:
    `potentially destructive`.
 13. Default database queries to read-only `SELECT` statements and require
    senior approval for writes or production mutations.
+14. Capture learnings only as pending candidates with
+   `support-monkey capture-learning cases/<IncidentNumber>`; do not promote
+   them to durable memory until a senior reviews evidence and redaction.
 
 First task:
 - Inspect the local Support-Monkey repo.

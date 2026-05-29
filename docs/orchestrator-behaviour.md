@@ -122,6 +122,28 @@ support-monkey next cases/<IncidentNumber>
 `worknotes.md` is the primary operational artifact. It should stay
 timestamped, factual, and easy to copy into ServiceNow.
 
+## Learning Loop
+
+Incident learnings must be reviewed before they become durable memory. Use:
+
+```sh
+support-monkey capture-learning cases/<IncidentNumber>
+```
+
+This writes a pending learning candidate under:
+
+```text
+.support-monkey/learnings/pending/
+```
+
+Do not promote a learning until a senior has checked that:
+
+- root cause is supported or clearly labelled as a hypothesis,
+- sensitive details are removed,
+- vendor/team blame is evidence-backed or removed,
+- the lesson is reusable,
+- the lesson does not conflict with runbooks or ownership records.
+
 ## Escalation Triggers
 
 Escalate to a senior, incident commander, bridge, vendor, or product owner when:

@@ -1,0 +1,44 @@
+{
+  "number": "INC-MONDAY-001",
+  "priority": "P2",
+  "openedAt": "2026-06-01T09:10:00+10:00",
+  "shortDescription": "Customer portal intermittently returns 502 during account lookup",
+  "description": "ServiceNow ticket says several call-centre users report that customer account lookup fails intermittently. Some retries succeed. No confirmed outage banner yet.",
+  "callerNotes": "Two users reported 502 from the portal around 09:05-09:10. One user says the same customer works after retrying.",
+  "affectedSystems": [
+    "customer-portal",
+    "account-bff",
+    "customer-profile-api"
+  ],
+  "impact": {
+    "scope": "unknown",
+    "depth": "partial_outage",
+    "affectedUsersEstimate": null,
+    "evidenceIds": [
+      "EV-001"
+    ]
+  },
+  "timeline": [
+    {
+      "occurredAt": "2026-06-01T09:10:00+10:00",
+      "summary": "Incident opened from call-centre reports.",
+      "evidenceId": "EV-001"
+    }
+  ],
+  "evidence": [
+    {
+      "id": "EV-001",
+      "source": "ServiceNow",
+      "type": "ticket",
+      "strength": "soft",
+      "reference": "INC-MONDAY-001",
+      "confidence": "reported",
+      "observedAt": "2026-06-01T09:10:00+10:00",
+      "supports": [
+        "symptom",
+        "timeline"
+      ],
+      "summary": "Call-centre reports intermittent 502 errors during customer account lookup."
+    }
+  ]
+}
