@@ -68,6 +68,8 @@ VS Code for all Support-Monkey commands.
 Run the current offline helpers:
 
 ```sh
+support-monkey new-incident INC0012345
+support-monkey next cases/INC0012345
 support-monkey triage examples/incident.sample.json
 support-monkey questions examples/incident.sample.json
 support-monkey resolution-gate examples/incident.sample.json
@@ -76,6 +78,8 @@ support-monkey resolution-gate examples/incident.sample.json
 If the console script is not installed yet, run with `PYTHONPATH`:
 
 ```sh
+PYTHONPATH=src python3 -m support_monkey.cli new-incident INC0012345
+PYTHONPATH=src python3 -m support_monkey.cli next cases/INC0012345
 PYTHONPATH=src python3 -m support_monkey.cli triage examples/incident.sample.json
 PYTHONPATH=src python3 -m support_monkey.cli questions examples/incident.sample.json
 PYTHONPATH=src python3 -m support_monkey.cli resolution-gate examples/incident.sample.json
@@ -101,11 +105,13 @@ drafts that contain sensitive data.
 Recommended workflow:
 
 1. Keep one case folder per incident under `cases/`.
-2. Store pasted ticket text, log snippets, and command output as local evidence
+2. Start new incidents with `support-monkey new-incident <IncidentNumber>`.
+3. Use `support-monkey next cases/<IncidentNumber>` for the next small action.
+4. Store pasted ticket text, log snippets, and command output as local evidence
    files.
-3. Run Support-Monkey commands from the VS Code integrated terminal.
-4. Review Markdown drafts in VS Code preview.
-5. Manually copy approved text into ServiceNow, Jira, or Slack.
+5. Run Support-Monkey commands from the VS Code integrated terminal.
+6. Review Markdown drafts in VS Code preview.
+7. Manually copy approved text into ServiceNow, Jira, or Slack.
 
 Support-Monkey remains draft-only by default. It should not write to workplace
 systems without explicit human approval and a later approved integration.

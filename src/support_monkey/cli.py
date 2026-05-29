@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 import sys
 
+from .cases import create_incident_case, render_case_next_action
 from .models import Incident
 from .questions import render_questions_markdown
 from .resolution import render_resolution_gate_markdown
@@ -17,6 +18,24 @@ def main(argv: list[str] | None = None) -> int:
 
     triage_parser = subparsers.add_parser("triage", help="Generate a local triage pack from incident JSON.")
     triage_parser.add_argument("incident_json", type=Path)
+
+    new_incident_parser = subparsers.add_parser(
+        "new-incident",
+        help="Create a guarded local case folder for a new incident.",
+    )
+    new_incident_parser.add_argument("incident_number", nargs="?")
+    new_incident_parser.add_argument(
+        "--cases-dir",
+        type=Path,
+        default=Path("cases"),
+        help="Directory where incident case folders are stored.",
+    )
+
+    next_parser = subparsers.add_parser(
+        "next",
+        help="Show the next small investigation step for a case folder.",
+    )
+    next_parser.add_argument("case", type=Path)
 
     questions_parser = subparsers.add_parser(
         "questions",
@@ -33,6 +52,10 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.command == "triage":
         return _triage(args.incident_json)
+    if args.command == "new-incident":
+        return _new_incident(args.incident_number, cases_dir=args.cases_dir)
+    if args.command == "next":
+        return _next(args.case)
     if args.command == "questions":
         return _questions(args.incident_json)
     if args.command == "resolution-gate":
@@ -46,6 +69,42 @@ def _triage(path: Path) -> int:
     if incident is None:
         return 2
     print(render_markdown(build_triage_pack(incident)), end="")
+    return 0
+
+
+def _new_incident(incident_number: str | None, *, cases_dir: Path) -> int:
+    number = incident_number
+    if not number:
+        try:
+            number = input("Incident number: ").strip()
+        except EOFError:
+            print("error: incident number is required", file=sys.stderr)
+            return 2
+    try:
+        result = create_incident_case(number, cases_dir=cases_dir)
+    except ValueError as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
+
+    print(f"Created case folder: {result.case_dir}")
+    if result.created_files:
+        print("Created files:")
+        for path in result.created_files:
+            print(f"- {path.relative_to(result.case_dir)}")
+    if result.existing_files:
+        print("Existing files left unchanged:")
+        for path in result.existing_files:
+            print(f"- {path.relative_to(result.case_dir)}")
+    print(f"\nNext: support-monkey next {result.case_dir}")
+    return 0
+
+
+def _next(case_path: Path) -> int:
+    try:
+        print(render_case_next_action(case_path), end="")
+    except (FileNotFoundError, OSError, ValueError, json.JSONDecodeError) as error:
+        print(f"error: {error}", file=sys.stderr)
+        return 2
     return 0
 
 

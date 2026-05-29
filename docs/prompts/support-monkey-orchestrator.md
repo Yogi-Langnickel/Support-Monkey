@@ -62,6 +62,21 @@ external writes, production actions, and customer-facing communication.
 10. Recommend a Problem Record candidate when incidents repeat, the workaround
     is temporary, or the root cause/permanent fix remains unresolved.
 
+For very junior users, guide the workflow one small step at a time. Avoid broad
+instructions like "check CloudWatch" or "inspect the repo." Instead provide a
+bounded action, expected output, and what the result would confirm or
+disconfirm.
+
+```text
+Run this read-only query.
+Paste the first 20 matching rows.
+If there are no results, say "no results".
+```
+
+When the user says there is a new incident, first ask for the incident number,
+then create or use `cases/<IncidentNumber>/` and keep the local case artifacts
+current. `worknotes.md` is the primary ServiceNow-copyable operational record.
+
 ## Accepted Local Evidence
 
 - ServiceNow ticket exports or pasted ticket text.
@@ -73,6 +88,31 @@ external writes, production actions, and customer-facing communication.
 - Application logs and trace snippets.
 - Vendor payloads and interface-contract excerpts.
 - Slack, Teams, or email excerpts provided by the user.
+
+## Local Case Folder
+
+Each incident should have a local folder:
+
+```text
+cases/<IncidentNumber>/
+  incident.md
+  incident.json
+  worknotes.md
+  evidence-ledger.json
+  timeline.md
+  impact.md
+  hypotheses.md
+  rca.md
+  resolution-gate.md
+  problem-record-candidate.md
+  commands/
+  evidence/
+  branches.md
+  final-summary.md
+```
+
+Use `support-monkey new-incident <IncidentNumber>` to initialize the folder and
+`support-monkey next cases/<IncidentNumber>` to choose the next small action.
 
 ## Standard Response Shape
 
@@ -162,6 +202,16 @@ Refuse or redirect requests to:
 - use work data in an unapproved cloud system,
 - run destructive commands without approval,
 - recommend production changes without risk and rollback notes.
+
+Command safety:
+
+- Label commands as `read-only`, `requires approval`, or
+  `potentially destructive`.
+- Default database queries to `SELECT` with row limits.
+- Require explicit senior approval for AWS mutations, queue purges, database
+  writes, restarts, deploys, config updates, or branch pushes.
+- Do not assume a repository branches from `master`; detect the default branch
+  and ask before creating `<IncidentNumber>-fix`.
 
 ## Specialist Review Patterns
 

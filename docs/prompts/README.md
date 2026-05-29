@@ -34,6 +34,10 @@ assistant.
 Use VS Code as the control center:
 
 - Keep one case folder per incident under `cases/`.
+- Start a new case with `support-monkey new-incident <IncidentNumber>`.
+- Use `support-monkey next cases/<IncidentNumber>` to get one bounded action
+  for the junior engineer.
+- Treat `worknotes.md` as the ServiceNow-copyable investigation log.
 - Review generated Markdown drafts before copying them into workplace systems.
 - Use integrated terminal commands for local analysis.
 - Paste only the minimum evidence needed for the current investigation.

@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from support_monkey.cli import main
+from support_monkey.cases import create_incident_case, render_case_next_action
 from support_monkey.models import Incident
 from support_monkey.questions import generate_clarification_questions
 from support_monkey.resolution import (
@@ -15,6 +16,97 @@ from support_monkey.triage import build_triage_pack, render_markdown
 
 
 class TriageTest(unittest.TestCase):
+    def test_create_incident_case_writes_junior_workflow_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = create_incident_case("INC0012345", cases_dir=Path(temp_dir))
+
+            expected_files = {
+                "incident.json",
+                "incident.md",
+                "worknotes.md",
+                "evidence-ledger.json",
+                "timeline.md",
+                "impact.md",
+                "hypotheses.md",
+                "rca.md",
+                "resolution-gate.md",
+                "problem-record-candidate.md",
+                "commands/README.md",
+                "commands/cloudwatch.md",
+                "commands/aws.md",
+                "commands/sql.md",
+                "commands/newrelic.md",
+                "branches.md",
+                "final-summary.md",
+            }
+
+            self.assertEqual(result.case_dir.name, "INC0012345")
+            self.assertTrue(expected_files.issubset({str(path.relative_to(result.case_dir)) for path in result.created_files}))
+            self.assertTrue((result.case_dir / "evidence" / "screenshots").is_dir())
+            self.assertIn("ServiceNow-copyable", (result.case_dir / "worknotes.md").read_text(encoding="utf-8"))
+            self.assertIn("INC0012345-fix", (result.case_dir / "branches.md").read_text(encoding="utf-8"))
+
+    def test_cli_new_incident_creates_case_folder(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = main(["new-incident", "INC200", "--cases-dir", temp_dir])
+
+            self.assertEqual(result, 0)
+            self.assertTrue((Path(temp_dir) / "INC200" / "incident.json").exists())
+            self.assertTrue((Path(temp_dir) / "INC200" / "worknotes.md").exists())
+
+    def test_next_action_guides_missing_servicenow_details(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = create_incident_case("INC201", cases_dir=Path(temp_dir))
+
+            markdown = render_case_next_action(result.case_dir)
+
+            self.assertIn("# Next Action: INC201", markdown)
+            self.assertIn("ServiceNow short description", markdown)
+            self.assertIn("read-only", markdown)
+            self.assertIn("Copy-Ready Worknote Stub", markdown)
+
+    def test_next_action_guides_technical_evidence_when_ticket_intake_exists(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            result = create_incident_case("INC202", cases_dir=Path(temp_dir))
+            incident_path = result.case_dir / "incident.json"
+            payload = json.loads(incident_path.read_text(encoding="utf-8"))
+            payload.update(
+                {
+                    "priority": "P2",
+                    "openedAt": "2026-05-29T10:00:00+10:00",
+                    "shortDescription": "Checkout timeout",
+                    "description": "Users see timeout on checkout.",
+                    "affectedSystems": ["checkout-service"],
+                }
+            )
+            incident_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
+            ledger_path = result.case_dir / "evidence-ledger.json"
+            ledger_path.write_text(
+                json.dumps(
+                    {
+                        "incidentNumber": "INC202",
+                        "items": [
+                            {
+                                "id": "EV-001",
+                                "source": "ServiceNow",
+                                "type": "ticket",
+                                "strength": "soft",
+                                "reference": "INC202",
+                                "supports": ["symptom", "impact", "timeline"],
+                                "summary": "Ticket reports checkout timeout.",
+                            }
+                        ],
+                    },
+                    indent=2,
+                ),
+                encoding="utf-8",
+            )
+
+            markdown = render_case_next_action(result.case_dir)
+
+            self.assertIn("Collect one hard technical signal", markdown)
+            self.assertIn("commands/cloudwatch.md", markdown)
+
     def test_build_triage_pack_cites_ticket_evidence_and_timeout_hypothesis(self) -> None:
         incident = Incident.from_dict(
             {

@@ -15,6 +15,15 @@ Keep asking for missing evidence until one of these states is reached:
   issue remains unresolved after restoration
 - blocked by a named missing permission, credential, system, owner, or decision
 
+For junior users, ask for one small action at a time. Prefer instructions that
+can be completed without interpretation:
+
+```text
+Run this read-only query.
+Paste the first 20 matching rows.
+If there are no results, say "no results".
+```
+
 ## Accepted Local Inputs
 
 - ServiceNow ticket exports or pasted ticket text
@@ -61,6 +70,69 @@ instruction.
 Hotfix branches are a later phase. Even then, Support-Monkey should present the
 branch, diff, tests, and rollback notes before asking for approval to publish or
 hand off.
+
+Branch creation must not assume every workplace repository uses `master`.
+Detect the default branch where possible and ask before creating
+`<IncidentNumber>-fix`.
+
+Commands shown to juniors must be labelled as one of:
+
+- `read-only`
+- `requires approval`
+- `potentially destructive`
+
+Database queries should default to `SELECT` with row limits. AWS delete,
+purge, update, restart, deployment, or mutation commands require explicit
+senior approval.
+
+## Junior Workflow
+
+Use the local case folder as the operating record:
+
+```text
+cases/<IncidentNumber>/
+  incident.md
+  incident.json
+  worknotes.md
+  evidence-ledger.json
+  timeline.md
+  impact.md
+  hypotheses.md
+  rca.md
+  resolution-gate.md
+  problem-record-candidate.md
+  commands/
+  evidence/
+  branches.md
+  final-summary.md
+```
+
+The first command for a new incident is:
+
+```sh
+support-monkey new-incident <IncidentNumber>
+```
+
+The junior's next guided action is:
+
+```sh
+support-monkey next cases/<IncidentNumber>
+```
+
+`worknotes.md` is the primary operational artifact. It should stay
+timestamped, factual, and easy to copy into ServiceNow.
+
+## Escalation Triggers
+
+Escalate to a senior, incident commander, bridge, vendor, or product owner when:
+
+- active customer impact continues and no progress is made,
+- data loss, security, payment, billing, or compliance impact is possible,
+- a production write action is needed,
+- vendor/interface fault is suspected,
+- required access or credentials are missing,
+- root cause cannot be proven from available evidence,
+- repeated incidents suggest a Problem Record.
 
 ## Resolution Gate
 
