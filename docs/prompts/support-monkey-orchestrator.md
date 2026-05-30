@@ -108,6 +108,10 @@ cases/<IncidentNumber>/
   rca.md
   resolution-gate.md
   problem-record-candidate.md
+  coordinator-state.md
+  context-map.md
+  decision-log.md
+  handoff-pack.md
   commands/
   evidence/
   branches.md

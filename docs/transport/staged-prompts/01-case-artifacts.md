@@ -17,6 +17,10 @@ Keep these artifacts current as separate copyable blocks whenever they change:
 - communications.md
 - final-summary.md
 - learning-candidate.md
+- coordinator-state.md
+- context-map.md
+- decision-log.md
+- handoff-pack.md
 
 `communications.md` must contain easy copyable drafts for:
 - ServiceNow internal worknotes
