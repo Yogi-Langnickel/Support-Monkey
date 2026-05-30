@@ -11,6 +11,7 @@ Paste them in order as needed.
 6. `05-monday-start.md`
 7. `06-closure-archive-learning.md`
 8. `07-incident-coordinator.md`
+9. `08-junior-chaos-control.md`
 
 Minimum Monday set:
 
@@ -19,6 +20,7 @@ Minimum Monday set:
 - `02-evidence-gate.md`
 - `06-closure-archive-learning.md`
 - `07-incident-coordinator.md`
+- `08-junior-chaos-control.md`
 - `05-monday-start.md`
 
 Add `03-rovo-bridge.md` when Confluence/Rovo is needed.
@@ -31,6 +33,9 @@ close, archive, create learning candidates, and prepare reviewed memory.
 Add `07-incident-coordinator.md` when you want Support-Monkey to maintain an
 incident-command state, context map, decision log, handoff pack, and escalation
 review while guiding juniors.
+Add `08-junior-chaos-control.md` when the main risk is messy junior input:
+fragmented ticket notes, vague assumptions, weak evidence, premature RCA, or
+copy-pasted worknotes that need structure before they enter ServiceNow.
 
 Suggested junior instruction:
 
@@ -41,6 +46,7 @@ Paste prompt 01. Wait for the assistant to finish.
 Paste prompt 02. Wait for the assistant to finish.
 Paste prompt 06. Wait for the assistant to finish.
 Paste prompt 07. Wait for the assistant to finish.
+Paste prompt 08. Wait for the assistant to finish.
 Paste prompt 05. Wait for the assistant to ask for the incident.
 Then say: I have a new incident INC001234.
 ```
@@ -49,3 +55,5 @@ Paste prompt 03 later when Rovo/Confluence is needed.
 Paste prompt 04 later when the incident points to an internal app/repo.
 Paste prompt 07 during setup when you want coordinator behavior active from
 the start.
+Paste prompt 08 during setup when Support-Monkey is primarily guiding juniors
+through chaotic or low-quality incident input.
