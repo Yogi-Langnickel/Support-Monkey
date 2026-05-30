@@ -514,6 +514,10 @@ def _case_files(incident_number: str, created_at: str) -> dict[str, str]:
         "rca.md": _rca_markdown(incident_number),
         "resolution-gate.md": _resolution_gate_markdown(),
         "problem-record-candidate.md": _problem_record_markdown(incident_number),
+        "coordinator-state.md": _coordinator_state_markdown(incident_number),
+        "context-map.md": _context_map_markdown(),
+        "decision-log.md": _decision_log_markdown(),
+        "handoff-pack.md": _handoff_pack_markdown(incident_number),
         "commands/README.md": _commands_markdown(),
         "commands/cloudwatch.md": _cloudwatch_commands_markdown(),
         "commands/aws.md": _aws_commands_markdown(),
@@ -1023,6 +1027,144 @@ Unknown.
 """
 
 
+def _coordinator_state_markdown(incident_number: str) -> str:
+    return f"""# Coordinator State: {incident_number}
+
+Status: INTAKE.
+
+## Current Objective
+
+Understand the symptom, impact, timeline, suspected owner/component, and next
+smallest evidence-gathering action.
+
+## Current Leading Hypothesis
+
+Unknown.
+
+## Current Owner / Component
+
+Unknown.
+
+## Current Blocker
+
+Initial incident details are incomplete.
+
+## Next Smallest Action
+
+Collect the ServiceNow short description, caller/call-centre notes, affected
+system or user journey, and incident start time.
+
+## Waiting On
+
+- Support engineer: ServiceNow incident details.
+
+## Escalation Status
+
+Not ready. Escalation requires symptom, impact, timeline, supporting evidence,
+what has been ruled out, the exact ask, and the expected proving/disproving
+output.
+"""
+
+
+def _context_map_markdown() -> str:
+    return """# Context Map
+
+Use this file to map the user journey and suspected technical chain without
+loading every repository into context.
+
+Status values: `unknown`, `suspected`, `checked`, `ruled out`, `confirmed`.
+
+```text
+User journey -> frontend -> BFF/API -> backend service -> queue/job -> DB/vendor/cache
+```
+
+| Component | Status | Evidence IDs | Notes |
+| --- | --- | --- | --- |
+| user journey | unknown | pending | pending |
+| frontend | unknown | pending | pending |
+| BFF/API | unknown | pending | pending |
+| backend service | unknown | pending | pending |
+| queue/job | unknown | pending | pending |
+| database | unknown | pending | pending |
+| vendor | unknown | pending | pending |
+| cache | unknown | pending | pending |
+"""
+
+
+def _decision_log_markdown() -> str:
+    return """# Decision Log
+
+Record meaningful investigation, escalation, branch, workaround, and closure
+decisions. Every decision should cite evidence or name the missing evidence
+blocker.
+
+| Timestamp | Decision | Reason | Evidence IDs | Next |
+| --- | --- | --- | --- | --- |
+| pending | Continue intake | Incident details are incomplete | pending | collect ServiceNow details |
+
+Example:
+
+```text
+Decision: Do not create fix branch yet.
+Reason: evidence points to stale reference data, not a code defect.
+Evidence: EV-003, EV-004.
+Next: validate data correction path.
+```
+"""
+
+
+def _handoff_pack_markdown(incident_number: str) -> str:
+    return f"""# Handoff Pack: {incident_number}
+
+Use this file when escalating, handing over, or resuming the incident.
+
+## Current State
+
+Intake incomplete.
+
+## Evidence Collected
+
+- pending
+
+## Ruled Out
+
+- pending
+
+## Current Hypothesis
+
+Unknown.
+
+## Open Blockers
+
+- ServiceNow details are incomplete.
+
+## Next 3 Actions
+
+1. Collect ServiceNow short description, caller/call-centre notes, affected
+   journey, and incident start time.
+1. Identify the suspected owner/component from ticket details, runbook, Rovo, or
+   local repo evidence.
+1. Collect one hard technical evidence source before RCA language.
+
+## ServiceNow Worknote Draft
+
+```text
+Initial triage started. Current state is evidence gathering; no root cause,
+impact, or resolution has been confirmed yet.
+```
+
+## Escalation Review
+
+- Symptom clear: no
+- Impact clear: no
+- Timeline clear enough: no
+- Suspected owner/component evidence: pending
+- Checked or ruled out: pending
+- Exact ask: pending
+- Proving/disproving output requested: pending
+"""
+
+
 def _commands_markdown() -> str:
     return """# Commands
 
@@ -1190,6 +1332,10 @@ def _case_file_health(case_dir: Path) -> tuple[str, ...]:
         "hypotheses.md",
         "resolution-gate.md",
         "problem-record-candidate.md",
+        "coordinator-state.md",
+        "context-map.md",
+        "decision-log.md",
+        "handoff-pack.md",
         "commands/cloudwatch.md",
         "commands/sql.md",
         "final-summary.md",

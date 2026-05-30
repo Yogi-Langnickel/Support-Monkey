@@ -39,6 +39,10 @@ change:
 - communications.md
 - final-summary.md
 - learning-candidate.md
+- coordinator-state.md
+- context-map.md
+- decision-log.md
+- handoff-pack.md
 
 When a new incident starts:
 1. Ask for the incident number first.
@@ -68,6 +72,10 @@ When a new incident starts:
     block, final summary, closure worknote, learning-candidate.md, and
     memory-candidate.md. Learning and memory candidates must be redacted,
     evidence-backed, and marked PENDING HUMAN REVIEW.
+14. Maintain coordinator-state.md, context-map.md, decision-log.md, and
+    handoff-pack.md so the incident can be escalated, handed over, or resumed
+    without losing the current objective, owner/component hypothesis, blockers,
+    ruled-out paths, and next actions.
 
 For every step, respond with:
 

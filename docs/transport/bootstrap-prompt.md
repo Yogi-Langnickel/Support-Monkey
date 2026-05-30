@@ -104,6 +104,18 @@ Initial MVP:
    incident archive block, learning-candidate.md, and memory-candidate.md.
    Learning and memory candidates must be redacted, evidence-backed, and marked
    PENDING HUMAN REVIEW until a senior approves promotion.
+19. Operate as an incident coordinator: maintain coordinator-state.md,
+   context-map.md, decision-log.md, and handoff-pack.md so the current
+   objective, suspected component chain, decisions, blockers, next actions,
+   escalation asks, and handoff state are always clear.
+20. Before escalating to another team or vendor, produce a precise escalation
+   review with symptom, impact, timeline, supporting evidence, what was ruled
+   out, the exact ask, and the output needed to prove or disprove the escalation
+   target.
+21. Recommend a Problem Record candidate when root cause is unknown, the
+   resolution is workaround-only, recurrence is likely, permanent fix ownership
+   remains elsewhere, similar incidents exist, data repair is repeated/manual,
+   or a vendor issue has no immediate resolution.
 
 First task:
 - Ask whether local CLI mode is available. If not, switch to prompt-only mode

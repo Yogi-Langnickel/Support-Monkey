@@ -41,6 +41,10 @@ class TriageTest(unittest.TestCase):
                 "rca.md",
                 "resolution-gate.md",
                 "problem-record-candidate.md",
+                "coordinator-state.md",
+                "context-map.md",
+                "decision-log.md",
+                "handoff-pack.md",
                 "commands/README.md",
                 "commands/cloudwatch.md",
                 "commands/aws.md",
@@ -55,6 +59,10 @@ class TriageTest(unittest.TestCase):
             self.assertTrue((result.case_dir / "evidence" / "screenshots").is_dir())
             self.assertIn("ServiceNow-copyable", (result.case_dir / "worknotes.md").read_text(encoding="utf-8"))
             self.assertIn("INC0012345-fix", (result.case_dir / "branches.md").read_text(encoding="utf-8"))
+            self.assertIn("Next Smallest Action", (result.case_dir / "coordinator-state.md").read_text(encoding="utf-8"))
+            self.assertIn("User journey -> frontend", (result.case_dir / "context-map.md").read_text(encoding="utf-8"))
+            self.assertIn("Do not create fix branch yet", (result.case_dir / "decision-log.md").read_text(encoding="utf-8"))
+            self.assertIn("Escalation Review", (result.case_dir / "handoff-pack.md").read_text(encoding="utf-8"))
 
     def test_cli_new_incident_creates_case_folder(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
