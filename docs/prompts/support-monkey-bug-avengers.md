@@ -42,7 +42,7 @@ Counter-hypothesis requirement:
 - State the leading hypothesis in one sentence.
 - Argue against it using the strongest contradictory or missing evidence.
 - Name at least one plausible alternative cause and the evidence that would
-  confirm or disconfirm it.
+  confirm or dis-confirm it.
 - Do not let a hypothesis become `confirmed` unless it meets the confidence
   criteria in `docs/evidence-standards.md`.
 
@@ -66,7 +66,7 @@ Look for:
 - timeout paths,
 - partial failure,
 - stale cache/state,
-- queue/backpressure problems,
+- queue/back-pressure problems,
 - rollback and recovery gaps.
 
 ### The Operator: Production Support
