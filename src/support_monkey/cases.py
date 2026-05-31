@@ -139,11 +139,18 @@ def import_incident_case(
         "incidentNumber": incident.number,
         "items": list(incident_file_payload.get("evidence", [])),
     }
+    imported_incident = Incident.from_dict(incident_file_payload)
     writes = {
         "incident.json": json.dumps(incident_file_payload, indent=2) + "\n",
         "evidence-ledger.json": json.dumps(evidence_payload, indent=2) + "\n",
-        "incident.md": _incident_markdown_from_incident(Incident.from_dict(incident_file_payload)),
-        "worknotes.md": _imported_worknotes_markdown(Incident.from_dict(incident_file_payload)),
+        "incident.md": _incident_markdown_from_incident(imported_incident),
+        "worknotes.md": _imported_worknotes_markdown(imported_incident),
+        "timeline.md": _timeline_markdown_from_incident(imported_incident),
+        "impact.md": _impact_markdown_from_incident(imported_incident),
+        "resolution-gate.md": render_resolution_gate_markdown(imported_incident),
+        "coordinator-state.md": _coordinator_state_markdown_from_incident(imported_incident),
+        "context-map.md": _context_map_markdown_from_incident(imported_incident),
+        "handoff-pack.md": _handoff_pack_markdown_from_incident(imported_incident),
     }
     for relative, content in writes.items():
         path = case_dir / relative
@@ -618,6 +625,9 @@ def _write_case_state(
         "timeline.md": _timeline_markdown_from_incident(incident),
         "impact.md": _impact_markdown_from_incident(incident),
         "resolution-gate.md": render_resolution_gate_markdown(incident),
+        "coordinator-state.md": _coordinator_state_markdown_from_incident(incident),
+        "context-map.md": _context_map_markdown_from_incident(incident),
+        "handoff-pack.md": _handoff_pack_markdown_from_incident(incident),
     }
     updated: list[Path] = []
     for relative, content in writes.items():
@@ -1163,6 +1173,272 @@ impact, or resolution has been confirmed yet.
 - Exact ask: pending
 - Proving/disproving output requested: pending
 """
+
+
+def _coordinator_state_markdown_from_incident(incident: Incident) -> str:
+    state, missing = classify_resolution_state(incident)
+    quality = assess_evidence_quality(incident)
+    affected = _affected_systems_text(incident)
+    next_action = _next_action(incident, missing)
+    blocker = _blocker_text(incident, missing)
+    missing_text = _missing_text(missing)
+    owner = affected if incident.affected_systems else "Unknown."
+    hypothesis = (
+        f"Suspected affected system or journey from intake: {affected}."
+        if incident.affected_systems
+        else "Unknown."
+    )
+    waiting_on = _waiting_on_text(incident, missing)
+    escalation_status = (
+        "Ready for human review. Confirm the handoff pack before any external update."
+        if state == "ready_for_human_review"
+        else (
+            "Not ready. Escalation still needs: "
+            f"{missing_text}, plus a clear ask and expected proving/disproving output."
+        )
+    )
+
+    return f"""# Coordinator State: {incident.number}
+
+Status: {state.upper()}.
+
+## Current Objective
+
+Close the remaining evidence gaps without claiming root cause or closure early.
+Resolution gate: `{state}`. Evidence quality: `{quality.score}/100`
+(`{quality.risk}`).
+
+## Current Leading Hypothesis
+
+{hypothesis}
+
+## Current Owner / Component
+
+{owner}
+
+## Current Blocker
+
+{blocker}
+
+## Next Smallest Action
+
+{next_action}
+
+## Waiting On
+
+{waiting_on}
+
+## Escalation Status
+
+{escalation_status}
+"""
+
+
+def _context_map_markdown_from_incident(incident: Incident) -> str:
+    rows = _context_map_rows(incident)
+    return "\n".join(
+        (
+            "# Context Map",
+            "",
+            "Use this file to map the user journey and suspected technical chain without",
+            "loading every repository into context.",
+            "",
+            "Status values: `unknown`, `suspected`, `checked`, `ruled out`, `confirmed`.",
+            "",
+            "```text",
+            "User journey -> frontend -> BFF/API -> backend service -> queue/job -> DB/vendor/cache",
+            "```",
+            "",
+            "| Component | Status | Evidence IDs | Notes |",
+            "| --- | --- | --- | --- |",
+            *rows,
+        )
+    ).strip() + "\n"
+
+
+def _handoff_pack_markdown_from_incident(incident: Incident) -> str:
+    state, missing = classify_resolution_state(incident)
+    quality = assess_evidence_quality(incident)
+    evidence = _evidence_summary_lines(incident)
+    next_actions = _next_three_actions(incident, missing)
+    missing_text = _missing_text(missing)
+    affected = _affected_systems_text(incident)
+    hypothesis = (
+        f"Suspected affected system or journey from intake: {affected}."
+        if incident.affected_systems
+        else "Unknown."
+    )
+    current_state = (
+        f"Resolution gate `{state}` with evidence quality `{quality.score}/100` "
+        f"(`{quality.risk}`). Missing evidence classes: {missing_text}."
+    )
+    symptom_clear = "yes" if incident.short_description or incident.description or incident.caller_notes else "no"
+    impact_clear = "yes" if "impact" not in missing else "no"
+    timeline_clear = "yes" if "timeline" not in missing else "no"
+    owner_evidence = "yes" if "owner" not in missing else "pending"
+
+    return f"""# Handoff Pack: {incident.number}
+
+Use this file when escalating, handing over, or resuming the incident.
+
+## Current State
+
+{current_state}
+
+## Evidence Collected
+
+{evidence}
+
+## Ruled Out
+
+- pending
+
+## Current Hypothesis
+
+{hypothesis}
+
+## Open Blockers
+
+{_blocker_lines(missing)}
+
+## Next 3 Actions
+
+{next_actions}
+
+## ServiceNow Worknote Draft
+
+```text
+Current triage state: {state}. Evidence items recorded: {len(incident.evidence)}.
+Affected systems/journey: {affected}. Missing evidence classes: {missing_text}.
+No root cause, impact, resolution, or closure claim is ready until the
+resolution gate is complete and reviewed.
+```
+
+## Escalation Review
+
+- Symptom clear: {symptom_clear}
+- Impact clear: {impact_clear}
+- Timeline clear enough: {timeline_clear}
+- Suspected owner/component evidence: {owner_evidence}
+- Checked or ruled out: pending
+- Exact ask: pending
+- Proving/disproving output requested: pending
+"""
+
+
+def _affected_systems_text(incident: Incident) -> str:
+    return ", ".join(incident.affected_systems) if incident.affected_systems else "unknown"
+
+
+def _missing_text(missing: tuple[str, ...]) -> str:
+    return ", ".join(missing) if missing else "none"
+
+
+def _blocker_text(incident: Incident, missing: tuple[str, ...]) -> str:
+    if missing:
+        return f"Missing evidence classes: {_missing_text(missing)}."
+    if not incident.evidence:
+        return "No evidence has been recorded yet."
+    return "No resolution-gate blockers remain; human review is required."
+
+
+def _blocker_lines(missing: tuple[str, ...]) -> str:
+    if not missing:
+        return "- none"
+    return "\n".join(f"- Missing {item} evidence." for item in missing)
+
+
+def _waiting_on_text(incident: Incident, missing: tuple[str, ...]) -> str:
+    if not incident.short_description:
+        return "- Support engineer: ServiceNow short description."
+    if not incident.opened_at:
+        return "- Support engineer: incident opened/start timestamp."
+    if not incident.affected_systems:
+        return "- Support engineer: affected system or user journey."
+    if missing:
+        return f"- Support engineer / assistant: evidence for {_missing_text(missing)}."
+    return "- Senior reviewer: resolution gate review."
+
+
+def _evidence_summary_lines(incident: Incident) -> str:
+    if not incident.evidence:
+        return "- pending"
+    return "\n".join(
+        (
+            f"- {item.evidence_id}: {item.source} {item.evidence_type} "
+            f"({item.strength}); supports {', '.join(item.supports) if item.supports else 'unspecified'}; "
+            f"{item.summary}"
+        )
+        for item in incident.evidence
+    )
+
+
+def _next_three_actions(incident: Incident, missing: tuple[str, ...]) -> str:
+    actions = [_next_action(incident, missing)]
+    if "technical evidence" in missing and len(actions) < 3:
+        actions.append("Collect one hard technical signal for the incident window and record it as evidence.")
+    if "impact" in missing and len(actions) < 3:
+        actions.append("Quantify customer or business impact and cite the supporting evidence IDs.")
+    if "owner" in missing and len(actions) < 3:
+        actions.append("Identify the likely owner/component from runbook, Rovo, repo, or service catalog evidence.")
+    if "resolution path" in missing and len(actions) < 3:
+        actions.append("Document the current workaround, mitigation, escalation path, or fix path as evidence.")
+    if "validation" in missing and len(actions) < 3:
+        actions.append("Record validation evidence before recommending closure.")
+    while len(actions) < 3:
+        actions.append("Record any blocker precisely if the next evidence source is unavailable.")
+    return "\n".join(f"1. {action}" for action in actions[:3])
+
+
+def _context_map_rows(incident: Incident) -> tuple[str, ...]:
+    evidence_by_class = _evidence_ids_by_supported_class(incident)
+    symptom_ids = evidence_by_class.get("symptom", ())
+    owner_ids = evidence_by_class.get("owner", ())
+    system_notes = _affected_systems_text(incident)
+
+    rows = [
+        _context_map_row(
+            "user journey",
+            "suspected" if incident.short_description or incident.description else "unknown",
+            symptom_ids,
+            incident.short_description or "pending",
+        ),
+        _context_map_row("frontend", "unknown", (), "pending"),
+        _context_map_row("BFF/API", "unknown", (), "pending"),
+        _context_map_row(
+            "backend service",
+            "suspected" if incident.affected_systems else "unknown",
+            owner_ids,
+            f"reported affected systems: {system_notes}" if incident.affected_systems else "pending",
+        ),
+        _context_map_row("queue/job", "unknown", (), "pending"),
+        _context_map_row("database", "unknown", (), "pending"),
+        _context_map_row("vendor", "unknown", (), "pending"),
+        _context_map_row("cache", "unknown", (), "pending"),
+    ]
+    for system in incident.affected_systems:
+        rows.append(_context_map_row(f"reported: {system}", "suspected", owner_ids, "from case context"))
+    return tuple(rows)
+
+
+def _context_map_row(component: str, status: str, evidence_ids: tuple[str, ...], notes: str) -> str:
+    evidence = ", ".join(evidence_ids) if evidence_ids else "pending"
+    return f"| {_markdown_cell(component)} | {status} | {_markdown_cell(evidence)} | {_markdown_cell(notes)} |"
+
+
+def _evidence_ids_by_supported_class(incident: Incident) -> dict[str, tuple[str, ...]]:
+    grouped: dict[str, list[str]] = {}
+    for item in incident.evidence:
+        for value in item.supports:
+            normalized = value.strip().lower().replace("_", " ")
+            if not normalized:
+                continue
+            grouped.setdefault(normalized, []).append(item.evidence_id)
+    return {key: tuple(values) for key, values in grouped.items()}
+
+
+def _markdown_cell(value: str) -> str:
+    return value.replace("|", "\\|").replace("\n", " ").strip() or "pending"
 
 
 def _commands_markdown() -> str:

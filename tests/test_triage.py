@@ -199,6 +199,8 @@ class TriageTest(unittest.TestCase):
             self.assertEqual(evidence_json["items"][0]["id"], "EV-001")
             self.assertIn("Customer portal 502", (result.case_dir / "incident.md").read_text(encoding="utf-8"))
             self.assertIn("soft evidence only", (result.case_dir / "worknotes.md").read_text(encoding="utf-8"))
+            self.assertIn("customer-portal, account-bff", (result.case_dir / "coordinator-state.md").read_text(encoding="utf-8"))
+            self.assertIn("EV-001: ServiceNow ticket (soft)", (result.case_dir / "handoff-pack.md").read_text(encoding="utf-8"))
 
     def test_cli_import_incident_and_status_are_monday_friendly(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -281,6 +283,9 @@ class TriageTest(unittest.TestCase):
 
             incident_json = json.loads((case.case_dir / "incident.json").read_text(encoding="utf-8"))
             impact_markdown = (case.case_dir / "impact.md").read_text(encoding="utf-8")
+            coordinator_state = (case.case_dir / "coordinator-state.md").read_text(encoding="utf-8")
+            context_map = (case.case_dir / "context-map.md").read_text(encoding="utf-8")
+            handoff_pack = (case.case_dir / "handoff-pack.md").read_text(encoding="utf-8")
             self.assertEqual(result.incident_number, "INC207")
             self.assertEqual(incident_json["priority"], "P2")
             self.assertIn("account-bff", incident_json["affectedSystems"])
@@ -288,6 +293,10 @@ class TriageTest(unittest.TestCase):
             self.assertIn("Scope: call_centre", impact_markdown)
             self.assertIn("Customer portal 502", (case.case_dir / "incident.md").read_text(encoding="utf-8"))
             self.assertIn("Case files refreshed automatically", (case.case_dir / "worknotes.md").read_text(encoding="utf-8"))
+            self.assertIn("customer-portal, account-bff", coordinator_state)
+            self.assertIn("| reported: account-bff | suspected | pending | from case context |", context_map)
+            self.assertIn("Missing evidence classes:", handoff_pack)
+            self.assertNotIn("Intake incomplete.", handoff_pack)
 
     def test_add_case_evidence_refreshes_ledger_timeline_and_artifact_instruction(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -316,12 +325,17 @@ class TriageTest(unittest.TestCase):
 
             ledger = json.loads((case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
             timeline = (case.case_dir / "timeline.md").read_text(encoding="utf-8")
+            context_map = (case.case_dir / "context-map.md").read_text(encoding="utf-8")
+            handoff_pack = (case.case_dir / "handoff-pack.md").read_text(encoding="utf-8")
             status = render_case_status(case.case_dir)
             self.assertEqual(result.evidence_id, "EV-001")
             self.assertEqual(ledger["items"][0]["type"], "log")
             self.assertIn("evidence/logs/lookup-timeouts.txt", ledger["items"][0]["artifact"])
             self.assertIn("Ask the junior to copy the artifact to:", result.artifact_instruction)
             self.assertIn("CloudWatch query found lookup timeout errors.", timeline)
+            self.assertIn("| backend service | suspected | pending | reported affected systems: lookup-api |", context_map)
+            self.assertIn("EV-001: CloudWatch log (hard)", handoff_pack)
+            self.assertNotIn("- pending\n\n## Ruled Out", handoff_pack)
             self.assertIn("hard `1`", status)
 
     def test_cli_update_case_and_add_evidence_avoid_manual_file_edits(self) -> None:
@@ -370,6 +384,8 @@ class TriageTest(unittest.TestCase):
             self.assertEqual(update_result, 0)
             self.assertEqual(evidence_result, 0)
             self.assertIn("Ticket reports portal latency.", (case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
+            self.assertIn("portal", (case.case_dir / "coordinator-state.md").read_text(encoding="utf-8"))
+            self.assertIn("EV-001: ServiceNow ticket (soft)", (case.case_dir / "handoff-pack.md").read_text(encoding="utf-8"))
 
     def test_rovo_questions_target_confluence_without_customer_access(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
