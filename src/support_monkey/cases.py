@@ -1,13 +1,22 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import datetime, timezone
+import fcntl
 import json
+import os
 from pathlib import Path
 import re
+import tempfile
 
 from .models import Incident
-from .resolution import assess_evidence_quality, classify_resolution_state, render_resolution_gate_markdown
+from .resolution import (
+    MINIMUM_RESOLUTION_EVIDENCE,
+    assess_evidence_quality,
+    classify_resolution_state,
+    render_resolution_gate_markdown,
+)
 
 
 INCIDENT_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
@@ -60,7 +69,7 @@ def create_incident_case(
 ) -> CaseCreationResult:
     number = _normalize_incident_number(incident_number)
     timestamp = _iso_now(now)
-    case_dir = cases_dir / number
+    case_dir = _case_dir_for_number(cases_dir, number)
     case_dir.mkdir(parents=True, exist_ok=True)
     for directory in (
         "evidence",
@@ -70,17 +79,17 @@ def create_incident_case(
         "evidence/query-results",
         "commands",
     ):
-        (case_dir / directory).mkdir(parents=True, exist_ok=True)
+        _safe_case_path(case_dir, directory).mkdir(parents=True, exist_ok=True)
 
     files = _case_files(number, timestamp)
     created: list[Path] = []
     existing: list[Path] = []
     for relative_path, content in files.items():
-        path = case_dir / relative_path
+        path = _safe_case_path(case_dir, relative_path)
         if path.exists():
             existing.append(path)
             continue
-        path.write_text(content, encoding="utf-8")
+        _write_text_atomic(path, content)
         created.append(path)
 
     return CaseCreationResult(
@@ -153,10 +162,10 @@ def import_incident_case(
         "handoff-pack.md": _handoff_pack_markdown_from_incident(imported_incident),
     }
     for relative, content in writes.items():
-        path = case_dir / relative
+        path = _safe_case_path(case_dir, relative)
         if path.exists() and path not in newly_created and not overwrite:
             continue
-        path.write_text(content, encoding="utf-8")
+        _write_text_atomic(path, content)
         overwritten.append(path)
 
     return CaseImportResult(
@@ -306,63 +315,64 @@ def update_case_context(
     now: datetime | None = None,
 ) -> CaseUpdateResult:
     case_dir = _resolve_case_dir(case_path)
-    payload = _read_case_payload(case_dir)
+    with _case_file_lock(case_dir):
+        payload = _read_case_payload(case_dir)
 
-    _set_if_present(payload, "priority", priority)
-    _set_if_present(payload, "openedAt", opened_at)
-    _set_if_present(payload, "shortDescription", short_description)
-    _set_if_present(payload, "description", description)
-    _set_if_present(payload, "callerNotes", caller_notes)
-    if affected_systems:
-        existing = [str(item).strip() for item in payload.get("affectedSystems", []) if str(item).strip()]
-        for system in affected_systems:
-            value = system.strip()
-            if value and value not in existing:
-                existing.append(value)
-        payload["affectedSystems"] = existing
-    if impact_scope.strip() or impact_depth.strip() or affected_users_estimate.strip() or impact_evidence_ids:
-        impact = payload.get("impact")
-        if not isinstance(impact, dict):
-            impact = {}
-        impact = dict(impact)
-        _set_if_present(impact, "scope", impact_scope)
-        _set_if_present(impact, "depth", impact_depth)
-        if affected_users_estimate.strip():
-            try:
-                impact["affectedUsersEstimate"] = int(affected_users_estimate.strip())
-            except ValueError as error:
-                raise ValueError("affected users estimate must be a number") from error
-        if impact_evidence_ids:
-            existing_ids = [str(item).strip() for item in impact.get("evidenceIds", []) if str(item).strip()]
-            for evidence_id in impact_evidence_ids:
-                value = evidence_id.strip()
-                if value and value not in existing_ids:
-                    existing_ids.append(value)
-            impact["evidenceIds"] = existing_ids
-        payload["impact"] = impact
+        _set_if_present(payload, "priority", priority)
+        _set_if_present(payload, "openedAt", opened_at)
+        _set_if_present(payload, "shortDescription", short_description)
+        _set_if_present(payload, "description", description)
+        _set_if_present(payload, "callerNotes", caller_notes)
+        if affected_systems:
+            existing = [str(item).strip() for item in payload.get("affectedSystems", []) if str(item).strip()]
+            for system in affected_systems:
+                value = system.strip()
+                if value and value not in existing:
+                    existing.append(value)
+            payload["affectedSystems"] = existing
+        if impact_scope.strip() or impact_depth.strip() or affected_users_estimate.strip() or impact_evidence_ids:
+            impact = payload.get("impact")
+            if not isinstance(impact, dict):
+                impact = {}
+            impact = dict(impact)
+            _set_if_present(impact, "scope", impact_scope)
+            _set_if_present(impact, "depth", impact_depth)
+            if affected_users_estimate.strip():
+                try:
+                    impact["affectedUsersEstimate"] = int(affected_users_estimate.strip())
+                except ValueError as error:
+                    raise ValueError("affected users estimate must be a number") from error
+            if impact_evidence_ids:
+                existing_ids = [str(item).strip() for item in impact.get("evidenceIds", []) if str(item).strip()]
+                for evidence_id in impact_evidence_ids:
+                    value = evidence_id.strip()
+                    if value and value not in existing_ids:
+                        existing_ids.append(value)
+                impact["evidenceIds"] = existing_ids
+            payload["impact"] = impact
 
-    timestamp = _iso_now(now)
-    incident = Incident.from_dict(payload)
-    fields = _context_field_summary(
-        priority=priority,
-        opened_at=opened_at,
-        short_description=short_description,
-        description=description,
-        caller_notes=caller_notes,
-        affected_systems=affected_systems,
-        impact_scope=impact_scope,
-        impact_depth=impact_depth,
-        affected_users_estimate=affected_users_estimate,
-        impact_evidence_ids=impact_evidence_ids,
-    )
-    worknote = (
-        f"[{timestamp}] Support-Monkey updated incident context from collected user input.\n"
-        f"Result: {fields}.\n"
-        "Outcome: Case files refreshed automatically; no manual case-file editing required.\n"
-        "Next: Run support-monkey next for the next bounded investigation action."
-    )
-    updated = _write_case_state(case_dir, payload, incident=incident)
-    _append_worknote(case_dir, worknote)
+        timestamp = _iso_now(now)
+        incident = Incident.from_dict(payload)
+        fields = _context_field_summary(
+            priority=priority,
+            opened_at=opened_at,
+            short_description=short_description,
+            description=description,
+            caller_notes=caller_notes,
+            affected_systems=affected_systems,
+            impact_scope=impact_scope,
+            impact_depth=impact_depth,
+            affected_users_estimate=affected_users_estimate,
+            impact_evidence_ids=impact_evidence_ids,
+        )
+        worknote = (
+            f"[{timestamp}] Support-Monkey updated incident context from collected user input.\n"
+            f"Result: {fields}.\n"
+            "Outcome: Case files refreshed automatically; no manual case-file editing required.\n"
+            "Next: Run support-monkey next for the next bounded investigation action."
+        )
+        updated = _write_case_state(case_dir, payload, incident=incident)
+        _append_worknote(case_dir, worknote)
     return CaseUpdateResult(
         case_dir=case_dir,
         incident_number=incident.number,
@@ -389,56 +399,59 @@ def add_case_evidence(
     now: datetime | None = None,
 ) -> EvidenceAddResult:
     case_dir = _resolve_case_dir(case_path)
-    payload = _read_case_payload(case_dir)
-    ledger = _read_evidence_ledger(case_dir, incident_number=str(payload.get("number", "UNKNOWN")))
-    items = ledger.setdefault("items", [])
-    if not isinstance(items, list):
-        raise ValueError("evidence-ledger.json items must be a list")
+    with _case_file_lock(case_dir):
+        payload = _read_case_payload(case_dir)
+        ledger = _read_evidence_ledger(case_dir, incident_number=str(payload.get("number", "UNKNOWN")))
+        items = ledger.setdefault("items", [])
+        if not isinstance(items, list):
+            raise ValueError("evidence-ledger.json items must be a list")
 
-    new_id = evidence_id.strip() or _next_evidence_id(items)
-    artifact_instruction = _artifact_instruction(case_dir, artifact_kind=artifact_kind, artifact_name=artifact_name)
-    if artifact_name and not reference:
-        reference = _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
+        new_id = evidence_id.strip() or _next_evidence_id(items)
+        _reject_duplicate_evidence_id(items, new_id)
+        artifact_instruction = _artifact_instruction(case_dir, artifact_kind=artifact_kind, artifact_name=artifact_name)
+        if artifact_name and not reference:
+            reference = _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
 
-    item = {
-        "id": new_id,
-        "source": source.strip() or "unknown",
-        "type": evidence_type.strip().lower() or "unknown",
-        "strength": strength.strip().lower() or "unknown",
-        "reference": reference.strip() or "n/a",
-        "confidence": confidence.strip().lower() or "unverified",
-        "supports": [value.strip() for value in supports if value.strip()],
-        "summary": summary.strip() or "No summary provided.",
-    }
-    if observed_at.strip():
-        item["observedAt"] = observed_at.strip()
-    if artifact_kind.strip() and artifact_name.strip():
-        item["artifact"] = _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
+        supported_classes = _validated_supports(supports)
+        item = {
+            "id": new_id,
+            "source": source.strip() or "unknown",
+            "type": evidence_type.strip().lower() or "unknown",
+            "strength": strength.strip().lower() or "unknown",
+            "reference": reference.strip() or "n/a",
+            "confidence": confidence.strip().lower() or "unverified",
+            "supports": supported_classes,
+            "summary": summary.strip() or "No summary provided.",
+        }
+        if observed_at.strip():
+            item["observedAt"] = observed_at.strip()
+        if artifact_kind.strip() and artifact_name.strip():
+            item["artifact"] = _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
 
-    items.append(item)
-    payload["evidence"] = items
-    if timeline_event.strip():
-        timeline = payload.setdefault("timeline", [])
-        if not isinstance(timeline, list):
-            raise ValueError("incident.json timeline must be a list")
-        timeline.append(
-            {
-                "occurredAt": observed_at.strip() or _iso_now(now),
-                "summary": timeline_event.strip(),
-                "evidenceId": new_id,
-            }
+        items.append(item)
+        payload["evidence"] = items
+        if timeline_event.strip():
+            timeline = payload.setdefault("timeline", [])
+            if not isinstance(timeline, list):
+                raise ValueError("incident.json timeline must be a list")
+            timeline.append(
+                {
+                    "occurredAt": observed_at.strip() or _iso_now(now),
+                    "summary": timeline_event.strip(),
+                    "evidenceId": new_id,
+                }
+            )
+
+        incident = Incident.from_dict(payload)
+        updated = _write_case_state(case_dir, payload, ledger=ledger, incident=incident)
+        timestamp = _iso_now(now)
+        worknote = (
+            f"[{timestamp}] Support-Monkey recorded evidence {new_id} from collected user input.\n"
+            f"Result: {item['source']} {item['type']} evidence captured with strength={item['strength']}; reference={item['reference']}.\n"
+            "Outcome: Evidence ledger and derived case files refreshed automatically.\n"
+            "Next: Run support-monkey next to continue the investigation."
         )
-
-    incident = Incident.from_dict(payload)
-    updated = _write_case_state(case_dir, payload, ledger=ledger, incident=incident)
-    timestamp = _iso_now(now)
-    worknote = (
-        f"[{timestamp}] Support-Monkey recorded evidence {new_id} from collected user input.\n"
-        f"Result: {item['source']} {item['type']} evidence captured with strength={item['strength']}; reference={item['reference']}.\n"
-        "Outcome: Evidence ledger and derived case files refreshed automatically.\n"
-        "Next: Run support-monkey next to continue the investigation."
-    )
-    _append_worknote(case_dir, worknote)
+        _append_worknote(case_dir, worknote)
     return EvidenceAddResult(
         case_dir=case_dir,
         incident_number=incident.number,
@@ -456,12 +469,96 @@ def capture_learning_candidate(
 ) -> LearningCaptureResult:
     case_dir = _resolve_case_dir(case_path)
     incident = _read_case_incident(case_dir)
+    incident_number = _normalize_incident_number(incident.number)
     timestamp = _iso_now(now)
+    if learnings_dir.exists() and learnings_dir.is_symlink():
+        raise ValueError(f"learning inbox must not be a symlink: {learnings_dir}")
+    learning_root = learnings_dir.resolve(strict=False)
     learnings_dir.mkdir(parents=True, exist_ok=True)
     safe_timestamp = timestamp.replace(":", "").replace("-", "")
-    path = learnings_dir / f"{incident.number}-{safe_timestamp}.md"
-    path.write_text(_learning_candidate_markdown(incident, case_dir, timestamp), encoding="utf-8")
-    return LearningCaptureResult(learning_path=path, incident_number=incident.number)
+    path = learning_root / f"{incident_number}-{safe_timestamp}.md"
+    _ensure_within_root(learning_root, path)
+    _write_text_atomic(path, _learning_candidate_markdown(incident, case_dir, timestamp))
+    return LearningCaptureResult(learning_path=path, incident_number=incident_number)
+
+
+def _case_dir_for_number(cases_dir: Path, incident_number: str) -> Path:
+    if cases_dir.exists() and cases_dir.is_symlink():
+        raise ValueError(f"case root must not be a symlink: {cases_dir}")
+    root = cases_dir.resolve(strict=False)
+    root.mkdir(parents=True, exist_ok=True)
+    case_dir = root / incident_number
+    if case_dir.exists() and case_dir.is_symlink():
+        raise ValueError(f"case folder must not be a symlink: {case_dir}")
+    _ensure_within_root(root, case_dir)
+    return case_dir
+
+
+def _safe_case_path(case_dir: Path, relative_path: str | Path) -> Path:
+    root = case_dir.resolve(strict=False)
+    relative = Path(relative_path)
+    if relative.is_absolute() or ".." in relative.parts:
+        raise ValueError(f"case path must be relative to the case folder: {relative_path}")
+    path = root / relative
+    if path.exists() and path.is_symlink():
+        raise ValueError(f"case path must not be a symlink: {path}")
+    _ensure_within_root(root, path)
+    return path
+
+
+def _ensure_within_root(root: Path, path: Path) -> None:
+    try:
+        path.resolve(strict=False).relative_to(root.resolve(strict=False))
+    except ValueError as error:
+        raise ValueError(f"case path escapes case root: {path}") from error
+
+
+def _write_text_atomic(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists() and path.is_symlink():
+        raise ValueError(f"case path must not be a symlink: {path}")
+    temp_name = ""
+    try:
+        with tempfile.NamedTemporaryFile(
+            "w",
+            encoding="utf-8",
+            dir=path.parent,
+            prefix=f".{path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as handle:
+            temp_name = handle.name
+            handle.write(content)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temp_name, path)
+        _fsync_directory(path.parent)
+    finally:
+        if temp_name:
+            try:
+                Path(temp_name).unlink()
+            except FileNotFoundError:
+                pass
+
+
+def _fsync_directory(path: Path) -> None:
+    directory_fd = os.open(path, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+@contextmanager
+def _case_file_lock(case_dir: Path):
+    lock_path = _safe_case_path(case_dir, ".support-monkey.lock")
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    with lock_path.open("a+", encoding="utf-8") as handle:
+        fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        try:
+            yield
+        finally:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
 
 def _normalize_incident_number(value: str) -> str:
@@ -578,7 +675,7 @@ def _context_field_summary(
 
 
 def _read_case_payload(case_dir: Path) -> dict[str, object]:
-    incident_path = case_dir / "incident.json"
+    incident_path = _safe_case_path(case_dir, "incident.json")
     payload = json.loads(incident_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"incident JSON must be an object: {incident_path}")
@@ -590,7 +687,7 @@ def _read_case_payload(case_dir: Path) -> dict[str, object]:
 
 
 def _read_evidence_ledger(case_dir: Path, *, incident_number: str) -> dict[str, object]:
-    ledger_path = case_dir / "evidence-ledger.json"
+    ledger_path = _safe_case_path(case_dir, "evidence-ledger.json")
     if not ledger_path.exists():
         return {"incidentNumber": incident_number, "items": []}
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
@@ -631,18 +728,20 @@ def _write_case_state(
     }
     updated: list[Path] = []
     for relative, content in writes.items():
-        path = case_dir / relative
-        path.write_text(content, encoding="utf-8")
+        path = _safe_case_path(case_dir, relative)
+        _write_text_atomic(path, content)
         updated.append(path)
     return tuple(updated)
 
 
 def _append_worknote(case_dir: Path, entry: str) -> None:
-    path = case_dir / "worknotes.md"
+    path = _safe_case_path(case_dir, "worknotes.md")
     with path.open("a", encoding="utf-8") as handle:
         handle.write("\n```text\n")
         handle.write(entry.strip())
         handle.write("\n```\n")
+        handle.flush()
+        os.fsync(handle.fileno())
 
 
 def _next_evidence_id(items: list[object]) -> str:
@@ -657,6 +756,34 @@ def _next_evidence_id(items: list[object]) -> str:
     return f"EV-{highest + 1:03d}"
 
 
+def _reject_duplicate_evidence_id(items: list[object], evidence_id: str) -> None:
+    existing = {
+        str(item.get("id") or item.get("evidenceId") or "").strip()
+        for item in items
+        if isinstance(item, dict)
+    }
+    if evidence_id in existing:
+        raise ValueError(f"duplicate evidence ID: {evidence_id}")
+
+
+def _validated_supports(supports: tuple[str, ...]) -> list[str]:
+    supported_classes: list[str] = []
+    invalid: list[str] = []
+    for value in supports:
+        label = value.strip()
+        if not label:
+            continue
+        normalized = label.lower().replace("_", " ").replace("-", " ")
+        if normalized not in MINIMUM_RESOLUTION_EVIDENCE:
+            invalid.append(label)
+            continue
+        supported_classes.append(normalized)
+    if invalid:
+        allowed = ", ".join(MINIMUM_RESOLUTION_EVIDENCE)
+        raise ValueError(f"unsupported evidence classes: {', '.join(invalid)}; allowed: {allowed}")
+    return supported_classes
+
+
 def _artifact_reference(*, artifact_kind: str, artifact_name: str) -> str:
     directory = _artifact_directory_name(artifact_kind)
     return f"evidence/{directory}/{artifact_name.strip()}"
@@ -665,7 +792,7 @@ def _artifact_reference(*, artifact_kind: str, artifact_name: str) -> str:
 def _artifact_instruction(case_dir: Path, *, artifact_kind: str, artifact_name: str) -> str:
     if not artifact_name.strip():
         return ""
-    target = case_dir / _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name)
+    target = _safe_case_path(case_dir, _artifact_reference(artifact_kind=artifact_kind, artifact_name=artifact_name))
     if target.exists():
         return f"Artifact already present: {target}"
     return f"Ask the junior to copy the artifact to: {target}"
@@ -1590,11 +1717,17 @@ Before creating a branch:
 
 def _resolve_case_dir(case_path: Path) -> Path:
     if case_path.is_dir():
-        return case_path
+        return _validate_case_dir(case_path)
     candidate = Path("cases") / str(case_path)
     if candidate.is_dir():
-        return candidate
+        return _validate_case_dir(candidate)
     raise FileNotFoundError(f"case folder not found: {case_path}")
+
+
+def _validate_case_dir(case_dir: Path) -> Path:
+    if case_dir.is_symlink():
+        raise ValueError(f"case folder must not be a symlink: {case_dir}")
+    return case_dir.resolve(strict=False)
 
 
 def _case_file_health(case_dir: Path) -> tuple[str, ...]:
@@ -1618,18 +1751,18 @@ def _case_file_health(case_dir: Path) -> tuple[str, ...]:
     )
     rows = []
     for relative in expected:
-        marker = "ok" if (case_dir / relative).exists() else "missing"
+        marker = "ok" if _safe_case_path(case_dir, relative).exists() else "missing"
         rows.append(f"- `{relative}`: {marker}")
     return tuple(rows)
 
 
 def _read_case_incident(case_dir: Path) -> Incident:
-    incident_path = case_dir / "incident.json"
+    incident_path = _safe_case_path(case_dir, "incident.json")
     payload = json.loads(incident_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"incident JSON must be an object: {incident_path}")
 
-    ledger_path = case_dir / "evidence-ledger.json"
+    ledger_path = _safe_case_path(case_dir, "evidence-ledger.json")
     if ledger_path.exists():
         ledger_payload = json.loads(ledger_path.read_text(encoding="utf-8"))
         if isinstance(ledger_payload, dict) and isinstance(ledger_payload.get("items"), list):

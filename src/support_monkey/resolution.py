@@ -200,23 +200,8 @@ def render_resolution_gate_markdown(incident: Incident) -> str:
 
 def _present_evidence_classes(incident: Incident) -> set[str]:
     present: set[str] = set()
-    if incident.short_description or incident.description or incident.caller_notes:
-        present.add("symptom")
-    if (
-        incident.priority != "unknown"
-        or incident.affected_systems
-        or incident.impact.scope != "unknown"
-        or incident.impact.depth != "unknown"
-    ):
-        present.add("impact")
-    if incident.opened_at or incident.timeline:
-        present.add("timeline")
-    if incident.affected_systems:
-        present.add("owner")
-
     for item in incident.evidence:
         present.update(_evidence_supported_classes(item))
-
     return present
 
 
@@ -226,31 +211,6 @@ def _evidence_supported_classes(item: Evidence) -> set[str]:
         normalized = _normalize_evidence_class(value)
         if normalized in MINIMUM_RESOLUTION_EVIDENCE:
             present.add(normalized)
-
-    text = f"{item.source} {item.reference} {item.summary}".lower()
-    if _is_hard_evidence(item) and any(
-        token in text
-        for token in ("log", "cloudwatch", "newrelic", "metric", "trace", "error", "stack")
-    ):
-        present.add("technical evidence")
-    if any(
-        token in text
-        for token in ("workaround", "fix", "vendor", "jira", "rollback", "mitigation")
-    ):
-        present.add("resolution path")
-    if any(
-        token in text
-        for token in ("validated", "verified", "confirmed", "monitoring", "retested")
-    ):
-        present.add("validation")
-    if any(token in text for token in ("owner", "repository", "service", "runbook", "team")):
-        present.add("owner")
-    if any(
-        token in text
-        for token in ("customer", "user", "orders", "requests", "tenant", "market")
-    ):
-        present.add("impact")
-
     return present
 
 
@@ -259,8 +219,17 @@ def _normalize_evidence_class(value: str) -> str:
 
 
 def _citation_issues(incident: Incident) -> tuple[str, ...]:
-    evidence_ids = {item.evidence_id for item in incident.evidence if item.evidence_id}
+    all_evidence_ids = [item.evidence_id for item in incident.evidence if item.evidence_id]
+    duplicate_ids = sorted(
+        evidence_id
+        for evidence_id in set(all_evidence_ids)
+        if all_evidence_ids.count(evidence_id) > 1
+    )
+    evidence_ids = set(all_evidence_ids)
     issues: list[str] = []
+
+    if duplicate_ids:
+        issues.append("Evidence ledger contains duplicate IDs: " + ", ".join(duplicate_ids) + ".")
 
     unknown_timeline_ids = sorted(
         {
@@ -290,27 +259,19 @@ def _citation_issues(incident: Incident) -> tuple[str, ...]:
             + "."
         )
 
+    present = _present_evidence_classes(incident)
+    if "timeline" in present and not any(entry.evidence_id for entry in incident.timeline):
+        issues.append("Timeline evidence class requires at least one cited timeline entry.")
+    if "impact" in present and not incident.impact.evidence_ids:
+        issues.append("Impact evidence class requires structured impact evidence IDs.")
+
     return tuple(issues)
 
 
 def _is_hard_evidence(item: Evidence) -> bool:
-    text = f"{item.source} {item.reference} {item.summary}".lower()
     return (
         item.strength == "hard"
         or item.evidence_type in HARD_EVIDENCE_TYPES
-        or any(
-            token in text
-            for token in (
-                "log",
-                "cloudwatch",
-                "newrelic",
-                "metric",
-                "trace",
-                "deployment",
-                "repository",
-                "payload",
-            )
-        )
     )
 
 

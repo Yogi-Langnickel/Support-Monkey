@@ -1,4 +1,5 @@
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -330,6 +331,7 @@ class TriageTest(unittest.TestCase):
             status = render_case_status(case.case_dir)
             self.assertEqual(result.evidence_id, "EV-001")
             self.assertEqual(ledger["items"][0]["type"], "log")
+            self.assertEqual(ledger["items"][0]["supports"], ["technical evidence", "timeline"])
             self.assertIn("evidence/logs/lookup-timeouts.txt", ledger["items"][0]["artifact"])
             self.assertIn("Ask the junior to copy the artifact to:", result.artifact_instruction)
             self.assertIn("CloudWatch query found lookup timeout errors.", timeline)
@@ -337,6 +339,155 @@ class TriageTest(unittest.TestCase):
             self.assertIn("EV-001: CloudWatch log (hard)", handoff_pack)
             self.assertNotIn("- pending\n\n## Ruled Out", handoff_pack)
             self.assertIn("hard `1`", status)
+
+    def test_resolution_gate_requires_structured_timeline_and_impact_citations(self) -> None:
+        incident = Incident.from_dict(
+            {
+                "number": "INC208A",
+                "priority": "P2",
+                "evidence": [
+                    {
+                        "id": "EV-001",
+                        "source": "APM",
+                        "type": "metric",
+                        "strength": "hard",
+                        "reference": "checkout/error-rate",
+                        "supports": [
+                            "symptom",
+                            "impact",
+                            "timeline",
+                            "owner",
+                            "technical_evidence",
+                            "resolution_path",
+                            "validation",
+                        ],
+                        "summary": "Metric record describes the incident and recovery.",
+                    }
+                ],
+            }
+        )
+
+        state, missing = classify_resolution_state(incident)
+        quality = assess_evidence_quality(incident)
+
+        self.assertEqual(state, "needs_more_evidence")
+        self.assertEqual(missing, ("valid evidence citations",))
+        self.assertTrue(any("Timeline evidence class requires" in issue for issue in quality.issues))
+        self.assertTrue(any("Impact evidence class requires" in issue for issue in quality.issues))
+
+    def test_add_case_evidence_rejects_unsupported_resolution_classes(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC208B", cases_dir=Path(temp_dir))
+
+            with self.assertRaisesRegex(ValueError, "unsupported evidence classes"):
+                add_case_evidence(
+                    case.case_dir,
+                    source="ServiceNow",
+                    evidence_type="ticket",
+                    strength="soft",
+                    summary="Ticket reports a portal issue.",
+                    supports=("symptom", "premature_closure"),
+                )
+
+    def test_add_case_evidence_rejects_duplicate_evidence_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC208E", cases_dir=Path(temp_dir))
+            add_case_evidence(
+                case.case_dir,
+                source="ServiceNow",
+                evidence_type="ticket",
+                strength="soft",
+                summary="Ticket reports a portal issue.",
+                supports=("symptom",),
+                evidence_id="EV-777",
+            )
+
+            with self.assertRaisesRegex(ValueError, "duplicate evidence ID: EV-777"):
+                add_case_evidence(
+                    case.case_dir,
+                    source="APM",
+                    evidence_type="metric",
+                    strength="hard",
+                    summary="Metric output confirms portal errors.",
+                    supports=("technical_evidence",),
+                    evidence_id="EV-777",
+                )
+
+    def test_resolution_gate_rejects_duplicate_imported_evidence_ids(self) -> None:
+        incident = Incident.from_dict(
+            {
+                "number": "INC208F",
+                "priority": "P2",
+                "impact": {"scope": "single_tenant", "evidenceIds": ["EV-001"]},
+                "timeline": [{"occurredAt": "2026-06-01T09:00:00Z", "summary": "Start", "evidenceId": "EV-001"}],
+                "evidence": [
+                    {
+                        "id": "EV-001",
+                        "source": "ServiceNow",
+                        "type": "ticket",
+                        "strength": "soft",
+                        "supports": ["symptom", "impact", "timeline"],
+                        "summary": "Ticket reports impact.",
+                    },
+                    {
+                        "id": "EV-001",
+                        "source": "APM",
+                        "type": "metric",
+                        "strength": "hard",
+                        "supports": ["owner", "technical_evidence", "resolution_path", "validation"],
+                        "summary": "Metric and runbook evidence.",
+                    },
+                ],
+            }
+        )
+
+        state, missing = classify_resolution_state(incident)
+        quality = assess_evidence_quality(incident)
+
+        self.assertEqual(state, "needs_more_evidence")
+        self.assertEqual(missing, ("valid evidence citations",))
+        self.assertIn("Evidence ledger contains duplicate IDs: EV-001.", quality.issues)
+
+    def test_case_writes_reject_symlinked_case_files(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            case = create_incident_case("INC208C", cases_dir=root / "cases")
+            outside = root / "outside-incident.json"
+            outside.write_text("do not replace\n", encoding="utf-8")
+            incident_path = case.case_dir / "incident.json"
+            incident_path.unlink()
+            os.symlink(outside, incident_path)
+
+            with self.assertRaisesRegex(ValueError, "must not be a symlink"):
+                update_case_context(
+                    case.case_dir,
+                    short_description="Portal latency",
+                    affected_systems=("portal",),
+                )
+
+            self.assertEqual(outside.read_text(encoding="utf-8"), "do not replace\n")
+
+    def test_create_incident_case_rejects_symlinked_case_folder(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            root = Path(temp_dir)
+            cases_dir = root / "cases"
+            cases_dir.mkdir()
+            outside = root / "outside"
+            outside.mkdir()
+            os.symlink(outside, cases_dir / "INC208D")
+
+            with self.assertRaisesRegex(ValueError, "case folder must not be a symlink"):
+                create_incident_case("INC208D", cases_dir=cases_dir)
+
+    def test_capture_learning_rejects_tampered_incident_number_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            case = create_incident_case("INC208G", cases_dir=Path(temp_dir) / "cases")
+            payload = json.loads((case.case_dir / "incident.json").read_text(encoding="utf-8"))
+            payload["number"] = "../escaped"
+            (case.case_dir / "incident.json").write_text(json.dumps(payload), encoding="utf-8")
+
+            with self.assertRaisesRegex(ValueError, "incident number must not contain path separators"):
+                capture_learning_candidate(case.case_dir, learnings_dir=Path(temp_dir) / "learnings")
 
     def test_cli_update_case_and_add_evidence_avoid_manual_file_edits(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -492,7 +643,7 @@ class TriageTest(unittest.TestCase):
         self.assertIn("resolution path", missing)
         self.assertIn("State: `intake_incomplete`", markdown)
 
-    def test_resolution_gate_allows_human_review_after_cited_resolution_evidence(self) -> None:
+    def test_resolution_gate_requires_explicit_supported_evidence_classes(self) -> None:
         incident = Incident.from_dict(
             {
                 "number": "INC103",
@@ -522,8 +673,19 @@ class TriageTest(unittest.TestCase):
 
         state, missing = classify_resolution_state(incident)
 
-        self.assertEqual(state, "ready_for_human_review")
-        self.assertEqual(missing, ())
+        self.assertEqual(state, "needs_more_evidence")
+        self.assertEqual(
+            missing,
+            (
+                "symptom",
+                "impact",
+                "timeline",
+                "owner",
+                "technical evidence",
+                "resolution path",
+                "validation",
+            ),
+        )
 
     def test_resolution_gate_uses_structured_evidence_classes(self) -> None:
         incident = Incident.from_dict(
@@ -609,6 +771,8 @@ class TriageTest(unittest.TestCase):
                 "shortDescription": "Checkout timeout",
                 "openedAt": "2026-05-18T09:00:00+10:00",
                 "affectedSystems": ["checkout-service"],
+                "impact": {"scope": "multi_tenant", "evidenceIds": ["EV-001"]},
+                "timeline": [{"occurredAt": "2026-05-18T09:00:00+10:00", "summary": "Ticket opened.", "evidenceId": "EV-001"}],
                 "evidence": [
                     {
                         "id": "EV-001",
@@ -703,6 +867,10 @@ class TriageTest(unittest.TestCase):
                         "reference": "checkout-service/2026-05-18T09:00",
                         "confidence": "confirmed",
                         "supports": [
+                            "symptom",
+                            "impact",
+                            "timeline",
+                            "owner",
                             "technical_evidence",
                             "resolution_path",
                             "validation",

@@ -33,12 +33,16 @@ Required evidence classes for the resolution gate are:
 - `validation`
 
 Use `supports` to state which classes an evidence item satisfies. The CLI also
-keeps a keyword fallback for older incident JSON, but new investigations should
-prefer explicit classes.
+validates `supports` against the required resolution-gate classes. Metadata and
+keywords in summaries do not satisfy the resolution gate by themselves; record
+an evidence item with the relevant explicit classes.
 
 Timeline and impact `evidenceId` / `evidenceIds` values must refer to IDs that
 exist in the evidence ledger. Broken citations keep the resolution gate in
 `needs_more_evidence`.
+
+Evidence IDs must be unique. Duplicate IDs make citations ambiguous and keep
+the resolution gate in `needs_more_evidence`.
 
 ## Evidence Strength
 

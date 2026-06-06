@@ -12,6 +12,7 @@ hypotheses, open questions, and one bounded next action.
 Read these files first for project work:
 
 - `README.md`
+- `docs/agent-memory.md`
 - `docs/evidence-standards.md`
 - `docs/orchestrator-behaviour.md`
 - `docs/transport/staged-prompts/README.md`
