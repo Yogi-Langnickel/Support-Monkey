@@ -32,46 +32,45 @@ class TriageTest(unittest.TestCase):
             result = create_incident_case("INC0012345", cases_dir=Path(temp_dir))
 
             expected_files = {
-                "incident.json",
-                "incident.md",
-                "worknotes.md",
-                "evidence-ledger.json",
-                "timeline.md",
-                "impact.md",
-                "hypotheses.md",
-                "rca.md",
-                "resolution-gate.md",
-                "problem-record-candidate.md",
-                "coordinator-state.md",
-                "context-map.md",
-                "decision-log.md",
-                "handoff-pack.md",
-                "commands/README.md",
-                "commands/cloudwatch.md",
-                "commands/aws.md",
-                "commands/sql.md",
-                "commands/newrelic.md",
-                "branches.md",
-                "final-summary.md",
+                "Incident/incident.json",
+                "Incident/incident.md",
+                "worknotes/worknotes.md",
+                "Incident/evidence-ledger.json",
+                "Incident/timeline.md",
+                "Incident/impact.md",
+                "Incident/hypotheses.md",
+                "Incident/resolution-gate.md",
+                "Incident/coordinator-state.md",
+                "Incident/context-map.md",
+                "Incident/decision-log.md",
+                "Incident/handoff-pack.md",
+                "worknotes/commands/README.md",
+                "worknotes/commands/cloudwatch.md",
+                "worknotes/commands/aws.md",
+                "worknotes/commands/sql.md",
+                "worknotes/commands/newrelic.md",
+                "outcomes/README.md",
             }
 
             self.assertEqual(result.case_dir.name, "INC0012345")
             self.assertTrue(expected_files.issubset({str(path.relative_to(result.case_dir)) for path in result.created_files}))
-            self.assertTrue((result.case_dir / "evidence" / "screenshots").is_dir())
-            self.assertIn("ServiceNow-copyable", (result.case_dir / "worknotes.md").read_text(encoding="utf-8"))
-            self.assertIn("INC0012345-fix", (result.case_dir / "branches.md").read_text(encoding="utf-8"))
-            self.assertIn("Next Smallest Action", (result.case_dir / "coordinator-state.md").read_text(encoding="utf-8"))
-            self.assertIn("User journey -> frontend", (result.case_dir / "context-map.md").read_text(encoding="utf-8"))
-            self.assertIn("Do not create fix branch yet", (result.case_dir / "decision-log.md").read_text(encoding="utf-8"))
-            self.assertIn("Escalation Review", (result.case_dir / "handoff-pack.md").read_text(encoding="utf-8"))
+            self.assertTrue((result.case_dir / "Incident" / "evidence" / "screenshots").is_dir())
+            self.assertIn("ServiceNow-copyable", (result.case_dir / "worknotes" / "worknotes.md").read_text(encoding="utf-8"))
+            self.assertFalse((result.case_dir / "outcomes" / "problem-record-candidate.md").exists())
+            self.assertFalse((result.case_dir / "outcomes" / "jira-product-handoff.md").exists())
+            self.assertIn("Next Smallest Action", (result.case_dir / "Incident" / "coordinator-state.md").read_text(encoding="utf-8"))
+            self.assertIn("User journey -> frontend", (result.case_dir / "Incident" / "context-map.md").read_text(encoding="utf-8"))
+            self.assertIn("Needed repo/code path", (result.case_dir / "Incident" / "context-map.md").read_text(encoding="utf-8"))
+            self.assertIn("Do not create fix branch yet", (result.case_dir / "Incident" / "decision-log.md").read_text(encoding="utf-8"))
+            self.assertIn("Escalation Review", (result.case_dir / "Incident" / "handoff-pack.md").read_text(encoding="utf-8"))
 
     def test_cli_new_incident_creates_case_folder(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             result = main(["new-incident", "INC200", "--cases-dir", temp_dir])
 
             self.assertEqual(result, 0)
-            self.assertTrue((Path(temp_dir) / "INC200" / "incident.json").exists())
-            self.assertTrue((Path(temp_dir) / "INC200" / "worknotes.md").exists())
+            self.assertTrue((Path(temp_dir) / "INC200" / "Incident" / "incident.json").exists())
+            self.assertTrue((Path(temp_dir) / "INC200" / "worknotes" / "worknotes.md").exists())
 
     def test_next_action_guides_missing_servicenow_details(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -87,7 +86,7 @@ class TriageTest(unittest.TestCase):
     def test_next_action_guides_technical_evidence_when_ticket_intake_exists(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             result = create_incident_case("INC202", cases_dir=Path(temp_dir))
-            incident_path = result.case_dir / "incident.json"
+            incident_path = result.case_dir / "Incident" / "incident.json"
             payload = json.loads(incident_path.read_text(encoding="utf-8"))
             payload.update(
                 {
@@ -99,7 +98,7 @@ class TriageTest(unittest.TestCase):
                 }
             )
             incident_path.write_text(json.dumps(payload, indent=2), encoding="utf-8")
-            ledger_path = result.case_dir / "evidence-ledger.json"
+            ledger_path = result.case_dir / "Incident" / "evidence-ledger.json"
             ledger_path.write_text(
                 json.dumps(
                     {
@@ -124,13 +123,13 @@ class TriageTest(unittest.TestCase):
             markdown = render_case_next_action(result.case_dir)
 
             self.assertIn("Collect one hard technical signal", markdown)
-            self.assertIn("commands/cloudwatch.md", markdown)
+            self.assertIn("worknotes/commands/cloudwatch.md", markdown)
 
     def test_capture_learning_creates_pending_human_review_candidate(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             base_dir = Path(temp_dir)
             result = create_incident_case("INC203", cases_dir=base_dir / "cases")
-            incident_path = result.case_dir / "incident.json"
+            incident_path = result.case_dir / "Incident" / "incident.json"
             payload = json.loads(incident_path.read_text(encoding="utf-8"))
             payload.update(
                 {
@@ -193,15 +192,15 @@ class TriageTest(unittest.TestCase):
 
             result = import_incident_case(payload, cases_dir=Path(temp_dir), overwrite=True)
 
-            incident_json = json.loads((result.case_dir / "incident.json").read_text(encoding="utf-8"))
-            evidence_json = json.loads((result.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
+            incident_json = json.loads((result.case_dir / "Incident" / "incident.json").read_text(encoding="utf-8"))
+            evidence_json = json.loads((result.case_dir / "Incident" / "evidence-ledger.json").read_text(encoding="utf-8"))
             self.assertEqual(result.incident_number, "INC205")
             self.assertEqual(incident_json["shortDescription"], "Customer portal 502")
             self.assertEqual(evidence_json["items"][0]["id"], "EV-001")
-            self.assertIn("Customer portal 502", (result.case_dir / "incident.md").read_text(encoding="utf-8"))
-            self.assertIn("soft evidence only", (result.case_dir / "worknotes.md").read_text(encoding="utf-8"))
-            self.assertIn("customer-portal, account-bff", (result.case_dir / "coordinator-state.md").read_text(encoding="utf-8"))
-            self.assertIn("EV-001: ServiceNow ticket (soft)", (result.case_dir / "handoff-pack.md").read_text(encoding="utf-8"))
+            self.assertIn("Customer portal 502", (result.case_dir / "Incident" / "incident.md").read_text(encoding="utf-8"))
+            self.assertIn("soft evidence only", (result.case_dir / "worknotes" / "worknotes.md").read_text(encoding="utf-8"))
+            self.assertIn("customer-portal, account-bff", (result.case_dir / "Incident" / "coordinator-state.md").read_text(encoding="utf-8"))
+            self.assertIn("EV-001: ServiceNow ticket (soft)", (result.case_dir / "Incident" / "handoff-pack.md").read_text(encoding="utf-8"))
 
     def test_cli_import_incident_and_status_are_monday_friendly(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -282,18 +281,18 @@ class TriageTest(unittest.TestCase):
                 affected_users_estimate="2",
             )
 
-            incident_json = json.loads((case.case_dir / "incident.json").read_text(encoding="utf-8"))
-            impact_markdown = (case.case_dir / "impact.md").read_text(encoding="utf-8")
-            coordinator_state = (case.case_dir / "coordinator-state.md").read_text(encoding="utf-8")
-            context_map = (case.case_dir / "context-map.md").read_text(encoding="utf-8")
-            handoff_pack = (case.case_dir / "handoff-pack.md").read_text(encoding="utf-8")
+            incident_json = json.loads((case.case_dir / "Incident" / "incident.json").read_text(encoding="utf-8"))
+            impact_markdown = (case.case_dir / "Incident" / "impact.md").read_text(encoding="utf-8")
+            coordinator_state = (case.case_dir / "Incident" / "coordinator-state.md").read_text(encoding="utf-8")
+            context_map = (case.case_dir / "Incident" / "context-map.md").read_text(encoding="utf-8")
+            handoff_pack = (case.case_dir / "Incident" / "handoff-pack.md").read_text(encoding="utf-8")
             self.assertEqual(result.incident_number, "INC207")
             self.assertEqual(incident_json["priority"], "P2")
             self.assertIn("account-bff", incident_json["affectedSystems"])
             self.assertEqual(incident_json["impact"]["affectedUsersEstimate"], 2)
             self.assertIn("Scope: call_centre", impact_markdown)
-            self.assertIn("Customer portal 502", (case.case_dir / "incident.md").read_text(encoding="utf-8"))
-            self.assertIn("Case files refreshed automatically", (case.case_dir / "worknotes.md").read_text(encoding="utf-8"))
+            self.assertIn("Customer portal 502", (case.case_dir / "Incident" / "incident.md").read_text(encoding="utf-8"))
+            self.assertIn("Case files refreshed automatically", (case.case_dir / "worknotes" / "worknotes.md").read_text(encoding="utf-8"))
             self.assertIn("customer-portal, account-bff", coordinator_state)
             self.assertIn("| reported: account-bff | suspected | pending | from case context |", context_map)
             self.assertIn("Missing evidence classes:", handoff_pack)
@@ -324,15 +323,15 @@ class TriageTest(unittest.TestCase):
                 timeline_event="CloudWatch query found lookup timeout errors.",
             )
 
-            ledger = json.loads((case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
-            timeline = (case.case_dir / "timeline.md").read_text(encoding="utf-8")
-            context_map = (case.case_dir / "context-map.md").read_text(encoding="utf-8")
-            handoff_pack = (case.case_dir / "handoff-pack.md").read_text(encoding="utf-8")
+            ledger = json.loads((case.case_dir / "Incident" / "evidence-ledger.json").read_text(encoding="utf-8"))
+            timeline = (case.case_dir / "Incident" / "timeline.md").read_text(encoding="utf-8")
+            context_map = (case.case_dir / "Incident" / "context-map.md").read_text(encoding="utf-8")
+            handoff_pack = (case.case_dir / "Incident" / "handoff-pack.md").read_text(encoding="utf-8")
             status = render_case_status(case.case_dir)
             self.assertEqual(result.evidence_id, "EV-001")
             self.assertEqual(ledger["items"][0]["type"], "log")
             self.assertEqual(ledger["items"][0]["supports"], ["technical evidence", "timeline"])
-            self.assertIn("evidence/logs/lookup-timeouts.txt", ledger["items"][0]["artifact"])
+            self.assertIn("Incident/evidence/logs/lookup-timeouts.txt", ledger["items"][0]["artifact"])
             self.assertIn("Ask the junior to copy the artifact to:", result.artifact_instruction)
             self.assertIn("CloudWatch query found lookup timeout errors.", timeline)
             self.assertIn("| backend service | suspected | pending | reported affected systems: lookup-api |", context_map)
@@ -454,7 +453,7 @@ class TriageTest(unittest.TestCase):
             case = create_incident_case("INC208C", cases_dir=root / "cases")
             outside = root / "outside-incident.json"
             outside.write_text("do not replace\n", encoding="utf-8")
-            incident_path = case.case_dir / "incident.json"
+            incident_path = case.case_dir / "Incident" / "incident.json"
             incident_path.unlink()
             os.symlink(outside, incident_path)
 
@@ -482,9 +481,9 @@ class TriageTest(unittest.TestCase):
     def test_capture_learning_rejects_tampered_incident_number_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             case = create_incident_case("INC208G", cases_dir=Path(temp_dir) / "cases")
-            payload = json.loads((case.case_dir / "incident.json").read_text(encoding="utf-8"))
+            payload = json.loads((case.case_dir / "Incident" / "incident.json").read_text(encoding="utf-8"))
             payload["number"] = "../escaped"
-            (case.case_dir / "incident.json").write_text(json.dumps(payload), encoding="utf-8")
+            (case.case_dir / "Incident" / "incident.json").write_text(json.dumps(payload), encoding="utf-8")
 
             with self.assertRaisesRegex(ValueError, "incident number must not contain path separators"):
                 capture_learning_candidate(case.case_dir, learnings_dir=Path(temp_dir) / "learnings")
@@ -534,9 +533,9 @@ class TriageTest(unittest.TestCase):
 
             self.assertEqual(update_result, 0)
             self.assertEqual(evidence_result, 0)
-            self.assertIn("Ticket reports portal latency.", (case.case_dir / "evidence-ledger.json").read_text(encoding="utf-8"))
-            self.assertIn("portal", (case.case_dir / "coordinator-state.md").read_text(encoding="utf-8"))
-            self.assertIn("EV-001: ServiceNow ticket (soft)", (case.case_dir / "handoff-pack.md").read_text(encoding="utf-8"))
+            self.assertIn("Ticket reports portal latency.", (case.case_dir / "Incident" / "evidence-ledger.json").read_text(encoding="utf-8"))
+            self.assertIn("portal", (case.case_dir / "Incident" / "coordinator-state.md").read_text(encoding="utf-8"))
+            self.assertIn("EV-001: ServiceNow ticket (soft)", (case.case_dir / "Incident" / "handoff-pack.md").read_text(encoding="utf-8"))
 
     def test_rovo_questions_target_confluence_without_customer_access(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

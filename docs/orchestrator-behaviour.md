@@ -91,25 +91,29 @@ Use the local case folder as the operating record:
 
 ```text
 cases/<IncidentNumber>/
-  incident.md
-  incident.json
-  worknotes.md
-  evidence-ledger.json
-  timeline.md
-  impact.md
-  hypotheses.md
-  rca.md
-  resolution-gate.md
-  problem-record-candidate.md
-  coordinator-state.md
-  context-map.md
-  decision-log.md
-  handoff-pack.md
-  commands/
-  evidence/
-  branches.md
-  final-summary.md
+  Incident/
+    incident.md
+    incident.json
+    evidence-ledger.json
+    timeline.md
+    impact.md
+    hypotheses.md
+    resolution-gate.md
+    coordinator-state.md
+    context-map.md
+    decision-log.md
+    handoff-pack.md
+    evidence/
+  worknotes/
+    worknotes.md
+    commands/
+  outcomes/
+    README.md
 ```
+
+`outcomes/` starts with guidance only. Create `problem-record-candidate.md`,
+`jira-product-handoff.md`, `branches.md`, `final-summary.md`, or `rca.md` only
+when evidence shows that outcome is actually needed.
 
 The first command for a new incident is:
 

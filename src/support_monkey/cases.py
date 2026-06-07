@@ -20,6 +20,28 @@ from .resolution import (
 
 
 INCIDENT_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
+CASE_ARTIFACT_PATHS = {
+    "incident.json": "Incident/incident.json",
+    "incident.md": "Incident/incident.md",
+    "evidence-ledger.json": "Incident/evidence-ledger.json",
+    "timeline.md": "Incident/timeline.md",
+    "impact.md": "Incident/impact.md",
+    "hypotheses.md": "Incident/hypotheses.md",
+    "resolution-gate.md": "Incident/resolution-gate.md",
+    "coordinator-state.md": "Incident/coordinator-state.md",
+    "context-map.md": "Incident/context-map.md",
+    "decision-log.md": "Incident/decision-log.md",
+    "handoff-pack.md": "Incident/handoff-pack.md",
+    "worknotes.md": "worknotes/worknotes.md",
+    "commands/README.md": "worknotes/commands/README.md",
+    "commands/cloudwatch.md": "worknotes/commands/cloudwatch.md",
+    "commands/aws.md": "worknotes/commands/aws.md",
+    "commands/sql.md": "worknotes/commands/sql.md",
+    "commands/newrelic.md": "worknotes/commands/newrelic.md",
+    "rca.md": "outcomes/rca.md",
+    "final-summary.md": "outcomes/final-summary.md",
+    "branches.md": "outcomes/branches.md",
+}
 
 
 @dataclass(frozen=True)
@@ -72,12 +94,15 @@ def create_incident_case(
     case_dir = _case_dir_for_number(cases_dir, number)
     case_dir.mkdir(parents=True, exist_ok=True)
     for directory in (
-        "evidence",
-        "evidence/screenshots",
-        "evidence/logs",
-        "evidence/exports",
-        "evidence/query-results",
-        "commands",
+        "Incident",
+        "Incident/evidence",
+        "Incident/evidence/screenshots",
+        "Incident/evidence/logs",
+        "Incident/evidence/exports",
+        "Incident/evidence/query-results",
+        "worknotes",
+        "worknotes/commands",
+        "outcomes",
     ):
         _safe_case_path(case_dir, directory).mkdir(parents=True, exist_ok=True)
 
@@ -85,7 +110,7 @@ def create_incident_case(
     created: list[Path] = []
     existing: list[Path] = []
     for relative_path, content in files.items():
-        path = _safe_case_path(case_dir, relative_path)
+        path = _case_artifact_path(case_dir, relative_path)
         if path.exists():
             existing.append(path)
             continue
@@ -162,7 +187,7 @@ def import_incident_case(
         "handoff-pack.md": _handoff_pack_markdown_from_incident(imported_incident),
     }
     for relative, content in writes.items():
-        path = _safe_case_path(case_dir, relative)
+        path = _case_artifact_path(case_dir, relative)
         if path.exists() and path not in newly_created and not overwrite:
             continue
         _write_text_atomic(path, content)
@@ -376,7 +401,7 @@ def update_case_context(
     return CaseUpdateResult(
         case_dir=case_dir,
         incident_number=incident.number,
-        updated_files=updated + (case_dir / "worknotes.md",),
+        updated_files=updated + (_case_artifact_path(case_dir, "worknotes.md"),),
         worknote=worknote,
     )
 
@@ -456,7 +481,7 @@ def add_case_evidence(
         case_dir=case_dir,
         incident_number=incident.number,
         evidence_id=new_id,
-        updated_files=updated + (case_dir / "worknotes.md",),
+        updated_files=updated + (_case_artifact_path(case_dir, "worknotes.md"),),
         artifact_instruction=artifact_instruction,
     )
 
@@ -504,6 +529,11 @@ def _safe_case_path(case_dir: Path, relative_path: str | Path) -> Path:
         raise ValueError(f"case path must not be a symlink: {path}")
     _ensure_within_root(root, path)
     return path
+
+
+def _case_artifact_path(case_dir: Path, logical_path: str | Path) -> Path:
+    logical = str(logical_path)
+    return _safe_case_path(case_dir, CASE_ARTIFACT_PATHS.get(logical, logical))
 
 
 def _ensure_within_root(root: Path, path: Path) -> None:
@@ -615,9 +645,7 @@ def _case_files(incident_number: str, created_at: str) -> dict[str, str]:
         "timeline.md": _timeline_markdown(),
         "impact.md": _impact_markdown(),
         "hypotheses.md": _hypotheses_markdown(),
-        "rca.md": _rca_markdown(incident_number),
         "resolution-gate.md": _resolution_gate_markdown(),
-        "problem-record-candidate.md": _problem_record_markdown(incident_number),
         "coordinator-state.md": _coordinator_state_markdown(incident_number),
         "context-map.md": _context_map_markdown(),
         "decision-log.md": _decision_log_markdown(),
@@ -627,8 +655,7 @@ def _case_files(incident_number: str, created_at: str) -> dict[str, str]:
         "commands/aws.md": _aws_commands_markdown(),
         "commands/sql.md": _sql_commands_markdown(),
         "commands/newrelic.md": _newrelic_commands_markdown(),
-        "final-summary.md": _final_summary_markdown(incident_number),
-        "branches.md": _branches_markdown(incident_number),
+        "outcomes/README.md": _outcomes_readme_markdown(incident_number),
     }
 
 
@@ -675,7 +702,7 @@ def _context_field_summary(
 
 
 def _read_case_payload(case_dir: Path) -> dict[str, object]:
-    incident_path = _safe_case_path(case_dir, "incident.json")
+    incident_path = _case_artifact_path(case_dir, "incident.json")
     payload = json.loads(incident_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"incident JSON must be an object: {incident_path}")
@@ -687,7 +714,7 @@ def _read_case_payload(case_dir: Path) -> dict[str, object]:
 
 
 def _read_evidence_ledger(case_dir: Path, *, incident_number: str) -> dict[str, object]:
-    ledger_path = _safe_case_path(case_dir, "evidence-ledger.json")
+    ledger_path = _case_artifact_path(case_dir, "evidence-ledger.json")
     if not ledger_path.exists():
         return {"incidentNumber": incident_number, "items": []}
     ledger = json.loads(ledger_path.read_text(encoding="utf-8"))
@@ -728,14 +755,14 @@ def _write_case_state(
     }
     updated: list[Path] = []
     for relative, content in writes.items():
-        path = _safe_case_path(case_dir, relative)
+        path = _case_artifact_path(case_dir, relative)
         _write_text_atomic(path, content)
         updated.append(path)
     return tuple(updated)
 
 
 def _append_worknote(case_dir: Path, entry: str) -> None:
-    path = _safe_case_path(case_dir, "worknotes.md")
+    path = _case_artifact_path(case_dir, "worknotes.md")
     with path.open("a", encoding="utf-8") as handle:
         handle.write("\n```text\n")
         handle.write(entry.strip())
@@ -786,7 +813,7 @@ def _validated_supports(supports: tuple[str, ...]) -> list[str]:
 
 def _artifact_reference(*, artifact_kind: str, artifact_name: str) -> str:
     directory = _artifact_directory_name(artifact_kind)
-    return f"evidence/{directory}/{artifact_name.strip()}"
+    return f"Incident/evidence/{directory}/{artifact_name.strip()}"
 
 
 def _artifact_instruction(case_dir: Path, *, artifact_kind: str, artifact_name: str) -> str:
@@ -1203,6 +1230,25 @@ output.
 """
 
 
+def _outcomes_readme_markdown(incident_number: str) -> str:
+    return f"""# Outcomes: {incident_number}
+
+Outcome drafts are created only when evidence supports them.
+
+Expected conditional outputs:
+
+- `problem-record-candidate.md` only for recurrence, unknown root cause,
+  workaround-only resolution, known error, repeated/manual data repair, or
+  vendor-owned permanent fix.
+- `jira-product-handoff.md` only when the evidence supports a product/code
+  backlog item or fix handoff.
+- `branches.md` only after the affected repository, base branch, access, and
+  need for a code/config fix are confirmed.
+- `final-summary.md` and `rca.md` only when the resolution gate is ready for
+  human review or the user confirms closure preparation.
+"""
+
+
 def _context_map_markdown() -> str:
     return """# Context Map
 
@@ -1214,6 +1260,27 @@ Status values: `unknown`, `suspected`, `checked`, `ruled out`, `confirmed`.
 ```text
 User journey -> frontend -> BFF/API -> backend service -> queue/job -> DB/vendor/cache
 ```
+
+## Architectural Diagram
+
+```text
+Reporter/Call centre
+  -> affected user journey (unknown)
+  -> frontend or channel (unknown)
+  -> BFF/API layer (unknown)
+  -> backend service (unknown)
+  -> queue/job/database/vendor/cache (unknown)
+  -> monitoring/logging evidence (pending)
+```
+
+## Repository Evidence Need
+
+- Needed repo/code path: unknown.
+- Ask the user which approved internal application repository, service,
+  config repo, job, lambda, or runbook should be inspected when the incident
+  points to code/config/deployment evidence.
+- Record local checkout path, branch/commit if known, and cited file snippets
+  before proposing any fix branch.
 
 | Component | Status | Evidence IDs | Notes |
 | --- | --- | --- | --- |
@@ -1363,6 +1430,8 @@ Resolution gate: `{state}`. Evidence quality: `{quality.score}/100`
 
 def _context_map_markdown_from_incident(incident: Incident) -> str:
     rows = _context_map_rows(incident)
+    affected = _affected_systems_text(incident)
+    backend_label = affected if incident.affected_systems else "unknown backend service"
     return "\n".join(
         (
             "# Context Map",
@@ -1375,6 +1444,24 @@ def _context_map_markdown_from_incident(incident: Incident) -> str:
             "```text",
             "User journey -> frontend -> BFF/API -> backend service -> queue/job -> DB/vendor/cache",
             "```",
+            "",
+            "## Architectural Diagram",
+            "",
+            "```text",
+            "Reporter/Call centre",
+            f"  -> user journey: {incident.short_description or 'unknown'}",
+            "  -> frontend/channel: unknown until runbook/repo evidence confirms",
+            "  -> BFF/API layer: unknown until logs/traces/repo evidence confirms",
+            f"  -> backend/service: {backend_label}",
+            "  -> queue/job/database/vendor/cache: unknown until evidence confirms",
+            "  -> monitoring/logging: pending hard evidence",
+            "```",
+            "",
+            "## Repository Evidence Need",
+            "",
+            "- Needed repo/code path: unknown until the affected component is supported by evidence.",
+            "- Ask the user for the approved internal repo or local checkout when code/config/deployment evidence is needed.",
+            "- Record local checkout path, branch/commit if known, and cited file snippets before proposing any fix branch.",
             "",
             "| Component | Status | Evidence IDs | Notes |",
             "| --- | --- | --- | --- |",
@@ -1732,22 +1819,21 @@ def _validate_case_dir(case_dir: Path) -> Path:
 
 def _case_file_health(case_dir: Path) -> tuple[str, ...]:
     expected = (
-        "incident.json",
-        "incident.md",
-        "worknotes.md",
-        "evidence-ledger.json",
-        "timeline.md",
-        "impact.md",
-        "hypotheses.md",
-        "resolution-gate.md",
-        "problem-record-candidate.md",
-        "coordinator-state.md",
-        "context-map.md",
-        "decision-log.md",
-        "handoff-pack.md",
-        "commands/cloudwatch.md",
-        "commands/sql.md",
-        "final-summary.md",
+        "Incident/incident.json",
+        "Incident/incident.md",
+        "worknotes/worknotes.md",
+        "Incident/evidence-ledger.json",
+        "Incident/timeline.md",
+        "Incident/impact.md",
+        "Incident/hypotheses.md",
+        "Incident/resolution-gate.md",
+        "Incident/coordinator-state.md",
+        "Incident/context-map.md",
+        "Incident/decision-log.md",
+        "Incident/handoff-pack.md",
+        "worknotes/commands/cloudwatch.md",
+        "worknotes/commands/sql.md",
+        "outcomes/README.md",
     )
     rows = []
     for relative in expected:
@@ -1757,12 +1843,12 @@ def _case_file_health(case_dir: Path) -> tuple[str, ...]:
 
 
 def _read_case_incident(case_dir: Path) -> Incident:
-    incident_path = _safe_case_path(case_dir, "incident.json")
+    incident_path = _case_artifact_path(case_dir, "incident.json")
     payload = json.loads(incident_path.read_text(encoding="utf-8"))
     if not isinstance(payload, dict):
         raise ValueError(f"incident JSON must be an object: {incident_path}")
 
-    ledger_path = _safe_case_path(case_dir, "evidence-ledger.json")
+    ledger_path = _case_artifact_path(case_dir, "evidence-ledger.json")
     if ledger_path.exists():
         ledger_payload = json.loads(ledger_path.read_text(encoding="utf-8"))
         if isinstance(ledger_payload, dict) and isinstance(ledger_payload.get("items"), list):
@@ -1803,13 +1889,13 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
     if quality.hard_evidence_count == 0:
         return (
             "Collect one hard technical signal for the incident window before choosing a resolution path. "
-            "Use `commands/cloudwatch.md` or `commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
+            "Use `worknotes/commands/cloudwatch.md` or `worknotes/commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
             "with `support-monkey add-evidence`. If there is an exported file, copy it only to the artifact path printed by Support-Monkey."
         )
     if "technical evidence" in missing:
         return (
             "Collect one hard technical signal for the incident window. "
-            "Use `commands/cloudwatch.md` or `commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
+            "Use `worknotes/commands/cloudwatch.md` or `worknotes/commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
             "with `support-monkey add-evidence`. If there is an exported file, copy it only to the artifact path printed by Support-Monkey."
         )
     if "impact" in missing:
@@ -1834,7 +1920,7 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
         )
     return (
         "Run the resolution gate and prepare a human review package. "
-        "Do not close externally until a senior reviews `worknotes.md`, `final-summary.md`, and `resolution-gate.md`."
+        "Do not close externally until a senior reviews `worknotes/worknotes.md`, `outcomes/final-summary.md`, and `Incident/resolution-gate.md`."
     )
 
 

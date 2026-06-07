@@ -20,11 +20,11 @@ Perform the closure process:
    close with a documented blocker, create a Problem Record candidate, or keep
    investigating.
 4. Produce final copyable artifacts:
-   - final-summary.md
+   - outcomes/final-summary.md
    - closure-worknote
    - caller/call-centre update draft
    - internal business/stakeholder update draft
-   - problem-record-candidate.md if recurrence, unknown root cause,
+   - outcomes/problem-record-candidate.md if recurrence, unknown root cause,
      workaround-only resolution, or permanent-fix ownership remains
 5. Archive the incident in prompt-only mode by producing a copyable
    closed-incident-archive block containing:

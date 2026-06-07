@@ -26,15 +26,22 @@ coordinator-state.md must track:
 - waiting on whom/what
 - escalation status
 
-context-map.md must map the suspected user journey and technical chain. Use a
-simple status for each component: `unknown`, `suspected`, `checked`,
-`ruled out`, or `confirmed`.
+Incident/context-map.md must map the suspected user journey, technical chain,
+known connections, and information flow. Use a simple status for each component:
+`unknown`, `suspected`, `checked`, `ruled out`, or `confirmed`.
 
 Example:
 
 ```text
 User journey -> frontend -> BFF/API -> backend service -> queue/job -> DB/vendor/cache
 ```
+
+Also maintain:
+- architectural diagram block showing all known upstream/downstream
+  connections and information flow
+- repository evidence need: required repo/code path, local checkout if known,
+  branch/commit if known, and access blocker if unknown
+- evidence IDs for every confirmed or ruled-out connection
 
 decision-log.md must record every meaningful decision:
 

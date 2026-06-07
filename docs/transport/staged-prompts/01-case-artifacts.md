@@ -6,23 +6,28 @@ Paste this after core activation.
 In prompt-only mode, simulate a local case folder named cases/<IncidentNumber>/.
 Keep these artifacts current as separate copyable blocks whenever they change:
 
-- incident.md
-- worknotes.md
-- evidence-ledger.json
-- timeline.md
-- impact.md
-- hypotheses.md
-- resolution-gate.md
-- problem-record-candidate.md
-- communications.md
-- final-summary.md
-- learning-candidate.md
-- coordinator-state.md
-- context-map.md
-- decision-log.md
-- handoff-pack.md
+- Incident/incident.md
+- Incident/incident.json
+- Incident/evidence-ledger.json
+- Incident/timeline.md
+- Incident/impact.md
+- Incident/hypotheses.md
+- Incident/resolution-gate.md
+- Incident/coordinator-state.md
+- Incident/context-map.md
+- Incident/decision-log.md
+- Incident/handoff-pack.md
+- worknotes/worknotes.md
+- worknotes/communications.md
+- outcomes/README.md
+- outcomes/learning-candidate.md when closure/learning capture is needed
+- outcomes/final-summary.md only during closure preparation
+- outcomes/problem-record-candidate.md only when recurrence, unknown root
+  cause, workaround-only resolution, or known-error criteria are met
+- outcomes/jira-product-handoff.md only when evidence supports a product/code
+  handoff
 
-`communications.md` must contain easy copyable drafts for:
+`worknotes/communications.md` must contain easy copyable drafts for:
 - ServiceNow internal worknotes
 - Call-centre/caller-facing update drafts
 - Internal business/stakeholder update drafts

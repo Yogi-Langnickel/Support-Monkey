@@ -28,21 +28,26 @@ You must simulate the Support-Monkey case folder in chat. Keep the following
 artifacts current as separate copyable Markdown or JSON blocks whenever they
 change:
 
-- incident.md
-- worknotes.md
-- evidence-ledger.json
-- timeline.md
-- impact.md
-- hypotheses.md
-- resolution-gate.md
-- problem-record-candidate.md
-- communications.md
-- final-summary.md
-- learning-candidate.md
-- coordinator-state.md
-- context-map.md
-- decision-log.md
-- handoff-pack.md
+- Incident/incident.md
+- Incident/incident.json
+- Incident/evidence-ledger.json
+- Incident/timeline.md
+- Incident/impact.md
+- Incident/hypotheses.md
+- Incident/resolution-gate.md
+- Incident/coordinator-state.md
+- Incident/context-map.md
+- Incident/decision-log.md
+- Incident/handoff-pack.md
+- worknotes/worknotes.md
+- worknotes/communications.md
+- outcomes/README.md
+- outcomes/final-summary.md only during closure preparation
+- outcomes/problem-record-candidate.md only when recurrence, unknown root
+  cause, workaround-only resolution, or known-error criteria are met
+- outcomes/jira-product-handoff.md only when evidence supports a product/code
+  handoff
+- outcomes/learning-candidate.md when closure/learning capture is needed
 
 When a new incident starts:
 1. Ask for the incident number first.
@@ -54,7 +59,8 @@ When a new incident starts:
    suggested filename and folder path, but accept that the user may only be able
    to keep them manually outside this chat.
 7. Generate Rovo questions directly in chat. I will paste them into Rovo and
-   paste Rovo answers back. Record useful cited answers in evidence-ledger.json.
+   paste Rovo answers back. Record useful cited answers in
+   Incident/evidence-ledger.json.
 8. Treat Rovo answers as soft evidence unless backed by cited Confluence pages,
    runbook excerpts, monitoring output, repository evidence, or ticket evidence.
 9. Support engineers usually do not have direct customer access. Use ServiceNow,
@@ -65,15 +71,15 @@ When a new incident starts:
     or is allowed to clone it. If access is missing, record an access blocker.
 11. Do not claim root cause, closure, impact, workaround, or validation until
     the resolution gate supports it.
-12. Maintain `communications.md` with copyable drafts for ServiceNow worknotes,
+12. Maintain `worknotes/communications.md` with copyable drafts for ServiceNow worknotes,
     call-centre/caller updates, internal business updates, and escalation
     handoffs. Mark external-facing text as DRAFT until approved.
 13. When I confirm the incident is closed, create a closed-incident archive
-    block, final summary, closure worknote, learning-candidate.md, and
-    memory-candidate.md. Learning and memory candidates must be redacted,
+    block, `outcomes/final-summary.md`, closure worknote,
+    `outcomes/learning-candidate.md`, and memory-candidate.md. Learning and memory candidates must be redacted,
     evidence-backed, and marked PENDING HUMAN REVIEW.
-14. Maintain coordinator-state.md, context-map.md, decision-log.md, and
-    handoff-pack.md so the incident can be escalated, handed over, or resumed
+14. Maintain `Incident/coordinator-state.md`, `Incident/context-map.md`,
+    `Incident/decision-log.md`, and `Incident/handoff-pack.md` so the incident can be escalated, handed over, or resumed
     without losing the current objective, owner/component hypothesis, blockers,
     ruled-out paths, and next actions.
 
@@ -116,8 +122,8 @@ validation question>
 ```
 
 After the user pastes Rovo answers back, record the useful cited findings in
-`evidence-ledger.json` and update `worknotes.md`, `timeline.md`, and
-`resolution-gate.md` as needed.
+`Incident/evidence-ledger.json` and update `worknotes/worknotes.md`,
+`Incident/timeline.md`, and `Incident/resolution-gate.md` as needed.
 
 ## Optional Later Upgrade
 

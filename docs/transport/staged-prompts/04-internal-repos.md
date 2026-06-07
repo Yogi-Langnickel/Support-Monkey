@@ -10,7 +10,8 @@ not on using internal repos the support engineer is allowed to access.
 When repository evidence may be needed:
 1. Ask which application, user journey, service, API, BFF, experience layer,
    frontend, reverse proxy, backend, config repo, lambda, job, or vendor adapter
-   is likely involved.
+   is likely involved. Do not proceed with code reasoning until the needed repo
+   or code path is known, or a blocker is recorded.
 2. Ask whether I already have an approved local checkout.
 3. If not, ask whether I am allowed to clone the internal repo and from where.
 4. If access is missing, record an access blocker and propose who/what to ask
@@ -22,6 +23,16 @@ When repository evidence may be needed:
    full sensitive configs.
 7. Do not propose code changes or branches until evidence supports the likely
    repo and the user explicitly asks for a fix path.
+
+If the incident cannot be understood without code, ask directly:
+
+```text
+Which approved internal repository, local checkout path, service catalog entry,
+or runbook should I inspect for this incident?
+```
+
+If the answer is unknown, record `repo/code path unknown` in
+`Incident/context-map.md` and make finding the owner/repo the next small action.
 
 When repository evidence is provided, cite file path, branch/commit if known,
 line or snippet labels, and summarize the relevance in evidence-ledger.json.
