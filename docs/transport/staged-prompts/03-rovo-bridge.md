@@ -29,9 +29,9 @@ vendor escalation paths, workarounds, and validation guidance.
 
 After I paste Rovo answers back:
 - extract only cited useful findings,
-- record them in `Incident/evidence-ledger.json`,
-- update `worknotes/worknotes.md`, `Incident/timeline.md`,
-  `Incident/impact.md`, `Incident/hypotheses.md`, and
-  `Incident/resolution-gate.md` as needed,
+- record them in `Facts/evidence-ledger.json`,
+- update `Worknotes/worknotes.md`, `Facts/timeline.md`,
+  `Facts/impact.md`, `Facts/hypotheses.md`, and
+  `Facts/resolution-gate.md` as needed,
 - mark uncited Rovo statements as soft evidence or open questions.
 ```

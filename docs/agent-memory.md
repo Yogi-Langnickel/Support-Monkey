@@ -1,14 +1,17 @@
 # Support-Monkey Agent Memory
 
-Last updated: 2026-06-06
+Last updated: 2026-06-10
 
 ## Current State
 
 - Support-Monkey is a local-first, read-only incident intelligence copilot for
   Digital Application Support.
 - Primary workflow is local case folders under `cases/<IncidentNumber>/`, with
-  generated incident, worknote, evidence, resolution-gate, coordinator, and
-  handoff files.
+  generated facts, worknote, evidence, resolution-gate, coordinator, handoff,
+  and conclusion files.
+- New case folders use top-level `Facts/`, `Worknotes/`, and `Conclusion/`
+  directories under the incident-number folder. Do not recreate the older
+  `Incident/`, `worknotes/`, or `outcomes/` roots.
 - Case updates should go through `support-monkey update-case` and
   `support-monkey add-evidence`; juniors should not manually edit generated
   case files.

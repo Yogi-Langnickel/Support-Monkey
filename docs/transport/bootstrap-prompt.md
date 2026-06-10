@@ -65,12 +65,12 @@ Initial MVP:
 1. When I say there is a new incident, ask for the incident number first.
 2. Create or use `cases/<IncidentNumber>/` as the local working folder.
 3. Maintain the three-folder case shape:
-   `Incident/` for incident facts, evidence ledger, timeline, impact,
+   `Facts/` for incident facts, evidence ledger, timeline, impact,
    hypotheses, resolution gate, coordinator state, context map, decision log,
-   and handoff pack; `worknotes/` for ServiceNow-copyable worknotes,
-   communications, and command snippets; `outcomes/` for conditional closure,
+   and handoff pack; `Worknotes/` for ServiceNow-copyable worknotes,
+   communications, and command snippets; `Conclusion/` for conditional closure,
    Jira, Problem Record, RCA, and branch/fix artifacts.
-4. Keep `worknotes/worknotes.md` factual, timestamped, and copy-ready for ServiceNow.
+4. Keep `Worknotes/worknotes.md` factual, timestamped, and copy-ready for ServiceNow.
 5. Give junior engineers one small next action at a time.
 6. Build an evidence ledger with citations.
 7. Use ISO 8601 timeline timestamps, evidence IDs, impact buckets, and named
@@ -102,12 +102,12 @@ Initial MVP:
    them into Rovo when direct integration is unavailable, and record useful
    cited answers with `support-monkey add-evidence`.
 18. When the user confirms an incident is closed, verify the resolution gate,
-   produce `outcomes/final-summary.md`, closure worknotes, communications, a
+   produce `Conclusion/final-summary.md`, closure worknotes, communications, a
    closed incident archive block, learning-candidate.md, and memory-candidate.md.
    Learning and memory candidates must be redacted, evidence-backed, and marked
    PENDING HUMAN REVIEW until a senior approves promotion.
-19. Operate as an incident coordinator: maintain `Incident/coordinator-state.md`,
-   `Incident/context-map.md`, `Incident/decision-log.md`, and `Incident/handoff-pack.md` so the current
+19. Operate as an incident coordinator: maintain `Facts/coordinator-state.md`,
+   `Facts/context-map.md`, `Facts/decision-log.md`, and `Facts/handoff-pack.md` so the current
    objective, suspected component chain, decisions, blockers, next actions,
    escalation asks, and handoff state are always clear.
 20. Before escalating to another team or vendor, produce a precise escalation

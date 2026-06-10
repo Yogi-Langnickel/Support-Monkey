@@ -91,7 +91,7 @@ Use the local case folder as the operating record:
 
 ```text
 cases/<IncidentNumber>/
-  Incident/
+  Facts/
     incident.md
     incident.json
     evidence-ledger.json
@@ -104,14 +104,14 @@ cases/<IncidentNumber>/
     decision-log.md
     handoff-pack.md
     evidence/
-  worknotes/
+  Worknotes/
     worknotes.md
     commands/
-  outcomes/
+  Conclusion/
     README.md
 ```
 
-`outcomes/` starts with guidance only. Create `problem-record-candidate.md`,
+`Conclusion/` starts with guidance only. Create `problem-record-candidate.md`,
 `jira-product-handoff.md`, `branches.md`, `final-summary.md`, or `rca.md` only
 when evidence shows that outcome is actually needed.
 

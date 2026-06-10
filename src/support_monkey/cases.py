@@ -21,26 +21,26 @@ from .resolution import (
 
 INCIDENT_NUMBER_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 CASE_ARTIFACT_PATHS = {
-    "incident.json": "Incident/incident.json",
-    "incident.md": "Incident/incident.md",
-    "evidence-ledger.json": "Incident/evidence-ledger.json",
-    "timeline.md": "Incident/timeline.md",
-    "impact.md": "Incident/impact.md",
-    "hypotheses.md": "Incident/hypotheses.md",
-    "resolution-gate.md": "Incident/resolution-gate.md",
-    "coordinator-state.md": "Incident/coordinator-state.md",
-    "context-map.md": "Incident/context-map.md",
-    "decision-log.md": "Incident/decision-log.md",
-    "handoff-pack.md": "Incident/handoff-pack.md",
-    "worknotes.md": "worknotes/worknotes.md",
-    "commands/README.md": "worknotes/commands/README.md",
-    "commands/cloudwatch.md": "worknotes/commands/cloudwatch.md",
-    "commands/aws.md": "worknotes/commands/aws.md",
-    "commands/sql.md": "worknotes/commands/sql.md",
-    "commands/newrelic.md": "worknotes/commands/newrelic.md",
-    "rca.md": "outcomes/rca.md",
-    "final-summary.md": "outcomes/final-summary.md",
-    "branches.md": "outcomes/branches.md",
+    "incident.json": "Facts/incident.json",
+    "incident.md": "Facts/incident.md",
+    "evidence-ledger.json": "Facts/evidence-ledger.json",
+    "timeline.md": "Facts/timeline.md",
+    "impact.md": "Facts/impact.md",
+    "hypotheses.md": "Facts/hypotheses.md",
+    "resolution-gate.md": "Facts/resolution-gate.md",
+    "coordinator-state.md": "Facts/coordinator-state.md",
+    "context-map.md": "Facts/context-map.md",
+    "decision-log.md": "Facts/decision-log.md",
+    "handoff-pack.md": "Facts/handoff-pack.md",
+    "worknotes.md": "Worknotes/worknotes.md",
+    "commands/README.md": "Worknotes/commands/README.md",
+    "commands/cloudwatch.md": "Worknotes/commands/cloudwatch.md",
+    "commands/aws.md": "Worknotes/commands/aws.md",
+    "commands/sql.md": "Worknotes/commands/sql.md",
+    "commands/newrelic.md": "Worknotes/commands/newrelic.md",
+    "rca.md": "Conclusion/rca.md",
+    "final-summary.md": "Conclusion/final-summary.md",
+    "branches.md": "Conclusion/branches.md",
 }
 
 
@@ -94,15 +94,15 @@ def create_incident_case(
     case_dir = _case_dir_for_number(cases_dir, number)
     case_dir.mkdir(parents=True, exist_ok=True)
     for directory in (
-        "Incident",
-        "Incident/evidence",
-        "Incident/evidence/screenshots",
-        "Incident/evidence/logs",
-        "Incident/evidence/exports",
-        "Incident/evidence/query-results",
-        "worknotes",
-        "worknotes/commands",
-        "outcomes",
+        "Facts",
+        "Facts/evidence",
+        "Facts/evidence/screenshots",
+        "Facts/evidence/logs",
+        "Facts/evidence/exports",
+        "Facts/evidence/query-results",
+        "Worknotes",
+        "Worknotes/commands",
+        "Conclusion",
     ):
         _safe_case_path(case_dir, directory).mkdir(parents=True, exist_ok=True)
 
@@ -655,7 +655,7 @@ def _case_files(incident_number: str, created_at: str) -> dict[str, str]:
         "commands/aws.md": _aws_commands_markdown(),
         "commands/sql.md": _sql_commands_markdown(),
         "commands/newrelic.md": _newrelic_commands_markdown(),
-        "outcomes/README.md": _outcomes_readme_markdown(incident_number),
+        "Conclusion/README.md": _outcomes_readme_markdown(incident_number),
     }
 
 
@@ -813,7 +813,7 @@ def _validated_supports(supports: tuple[str, ...]) -> list[str]:
 
 def _artifact_reference(*, artifact_kind: str, artifact_name: str) -> str:
     directory = _artifact_directory_name(artifact_kind)
-    return f"Incident/evidence/{directory}/{artifact_name.strip()}"
+    return f"Facts/evidence/{directory}/{artifact_name.strip()}"
 
 
 def _artifact_instruction(case_dir: Path, *, artifact_kind: str, artifact_name: str) -> str:
@@ -1819,21 +1819,21 @@ def _validate_case_dir(case_dir: Path) -> Path:
 
 def _case_file_health(case_dir: Path) -> tuple[str, ...]:
     expected = (
-        "Incident/incident.json",
-        "Incident/incident.md",
-        "worknotes/worknotes.md",
-        "Incident/evidence-ledger.json",
-        "Incident/timeline.md",
-        "Incident/impact.md",
-        "Incident/hypotheses.md",
-        "Incident/resolution-gate.md",
-        "Incident/coordinator-state.md",
-        "Incident/context-map.md",
-        "Incident/decision-log.md",
-        "Incident/handoff-pack.md",
-        "worknotes/commands/cloudwatch.md",
-        "worknotes/commands/sql.md",
-        "outcomes/README.md",
+        "Facts/incident.json",
+        "Facts/incident.md",
+        "Worknotes/worknotes.md",
+        "Facts/evidence-ledger.json",
+        "Facts/timeline.md",
+        "Facts/impact.md",
+        "Facts/hypotheses.md",
+        "Facts/resolution-gate.md",
+        "Facts/coordinator-state.md",
+        "Facts/context-map.md",
+        "Facts/decision-log.md",
+        "Facts/handoff-pack.md",
+        "Worknotes/commands/cloudwatch.md",
+        "Worknotes/commands/sql.md",
+        "Conclusion/README.md",
     )
     rows = []
     for relative in expected:
@@ -1889,13 +1889,13 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
     if quality.hard_evidence_count == 0:
         return (
             "Collect one hard technical signal for the incident window before choosing a resolution path. "
-            "Use `worknotes/commands/cloudwatch.md` or `worknotes/commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
+            "Use `Worknotes/commands/cloudwatch.md` or `Worknotes/commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
             "with `support-monkey add-evidence`. If there is an exported file, copy it only to the artifact path printed by Support-Monkey."
         )
     if "technical evidence" in missing:
         return (
             "Collect one hard technical signal for the incident window. "
-            "Use `worknotes/commands/cloudwatch.md` or `worknotes/commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
+            "Use `Worknotes/commands/cloudwatch.md` or `Worknotes/commands/newrelic.md`; the assistant should summarize the first 20 relevant rows "
             "with `support-monkey add-evidence`. If there is an exported file, copy it only to the artifact path printed by Support-Monkey."
         )
     if "impact" in missing:
@@ -1920,7 +1920,7 @@ def _next_action(incident: Incident, missing: tuple[str, ...]) -> str:
         )
     return (
         "Run the resolution gate and prepare a human review package. "
-        "Do not close externally until a senior reviews `worknotes/worknotes.md`, `outcomes/final-summary.md`, and `Incident/resolution-gate.md`."
+        "Do not close externally until a senior reviews `Worknotes/worknotes.md`, `Conclusion/final-summary.md`, and `Facts/resolution-gate.md`."
     )
 
 

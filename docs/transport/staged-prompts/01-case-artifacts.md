@@ -6,28 +6,28 @@ Paste this after core activation.
 In prompt-only mode, simulate a local case folder named cases/<IncidentNumber>/.
 Keep these artifacts current as separate copyable blocks whenever they change:
 
-- Incident/incident.md
-- Incident/incident.json
-- Incident/evidence-ledger.json
-- Incident/timeline.md
-- Incident/impact.md
-- Incident/hypotheses.md
-- Incident/resolution-gate.md
-- Incident/coordinator-state.md
-- Incident/context-map.md
-- Incident/decision-log.md
-- Incident/handoff-pack.md
-- worknotes/worknotes.md
-- worknotes/communications.md
-- outcomes/README.md
-- outcomes/learning-candidate.md when closure/learning capture is needed
-- outcomes/final-summary.md only during closure preparation
-- outcomes/problem-record-candidate.md only when recurrence, unknown root
+- Facts/incident.md
+- Facts/incident.json
+- Facts/evidence-ledger.json
+- Facts/timeline.md
+- Facts/impact.md
+- Facts/hypotheses.md
+- Facts/resolution-gate.md
+- Facts/coordinator-state.md
+- Facts/context-map.md
+- Facts/decision-log.md
+- Facts/handoff-pack.md
+- Worknotes/worknotes.md
+- Worknotes/communications.md
+- Conclusion/README.md
+- Conclusion/learning-candidate.md when closure/learning capture is needed
+- Conclusion/final-summary.md only during closure preparation
+- Conclusion/problem-record-candidate.md only when recurrence, unknown root
   cause, workaround-only resolution, or known-error criteria are met
-- outcomes/jira-product-handoff.md only when evidence supports a product/code
+- Conclusion/jira-product-handoff.md only when evidence supports a product/code
   handoff
 
-`worknotes/communications.md` must contain easy copyable drafts for:
+`Worknotes/communications.md` must contain easy copyable drafts for:
 - ServiceNow internal worknotes
 - Call-centre/caller-facing update drafts
 - Internal business/stakeholder update drafts

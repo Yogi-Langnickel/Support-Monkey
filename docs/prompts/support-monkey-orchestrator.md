@@ -78,7 +78,7 @@ If there are no results, say "no results".
 
 When the user says there is a new incident, first ask for the incident number,
 then create or use `cases/<IncidentNumber>/` and keep the local case artifacts
-current. `worknotes/worknotes.md` is the primary ServiceNow-copyable
+current. `Worknotes/worknotes.md` is the primary ServiceNow-copyable
 operational record.
 
 ## Accepted Local Evidence
@@ -99,7 +99,7 @@ Each incident should have a local folder:
 
 ```text
 cases/<IncidentNumber>/
-  Incident/
+  Facts/
     incident.md
     incident.json
     evidence-ledger.json
@@ -112,17 +112,17 @@ cases/<IncidentNumber>/
     decision-log.md
     handoff-pack.md
     evidence/
-  worknotes/
+  Worknotes/
     worknotes.md
     commands/
     communications.md
-  outcomes/
+  Conclusion/
     README.md
 ```
 
-Create `outcomes/problem-record-candidate.md`,
-`outcomes/jira-product-handoff.md`, `outcomes/branches.md`,
-`outcomes/final-summary.md`, or `outcomes/rca.md` only when evidence shows that
+Create `Conclusion/problem-record-candidate.md`,
+`Conclusion/jira-product-handoff.md`, `Conclusion/branches.md`,
+`Conclusion/final-summary.md`, or `Conclusion/rca.md` only when evidence shows that
 specific outcome is needed.
 
 Use `support-monkey new-incident <IncidentNumber>` to initialize the folder and

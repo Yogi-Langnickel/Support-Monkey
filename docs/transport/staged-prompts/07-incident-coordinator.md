@@ -26,7 +26,7 @@ coordinator-state.md must track:
 - waiting on whom/what
 - escalation status
 
-Incident/context-map.md must map the suspected user journey, technical chain,
+Facts/context-map.md must map the suspected user journey, technical chain,
 known connections, and information flow. Use a simple status for each component:
 `unknown`, `suspected`, `checked`, `ruled out`, or `confirmed`.
 

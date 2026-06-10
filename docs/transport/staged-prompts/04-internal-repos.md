@@ -32,7 +32,7 @@ or runbook should I inspect for this incident?
 ```
 
 If the answer is unknown, record `repo/code path unknown` in
-`Incident/context-map.md` and make finding the owner/repo the next small action.
+`Facts/context-map.md` and make finding the owner/repo the next small action.
 
 When repository evidence is provided, cite file path, branch/commit if known,
 line or snippet labels, and summarize the relevance in evidence-ledger.json.
