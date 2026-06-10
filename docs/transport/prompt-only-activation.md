@@ -12,9 +12,14 @@ or is allowed to create, a local checkout.
 ## What To Copy
 
 Copy the text from `docs/transport/bootstrap-prompt.md` into the approved AI
-assistant. Then append the activation addendum below.
+assistant first. Then append the activation addendum below.
+
+Copy everything between `BEGIN PROMPT-ONLY ADDENDUM` and
+`END PROMPT-ONLY ADDENDUM` into the same chat after the bootstrap prompt.
 
 ```text
+BEGIN PROMPT-ONLY ADDENDUM
+
 PROMPT-ONLY MODE:
 
 I probably cannot clone the personal public Support-Monkey repository, install
@@ -100,6 +105,8 @@ For every step, respond with:
 ```
 
 When I say "new incident", begin now.
+
+END PROMPT-ONLY ADDENDUM
 ```
 
 ## Rovo Bridge
