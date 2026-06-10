@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Support Infrastructure Diagram</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #111418;
+      --panel: #171c22;
+      --panel-2: #1f2630;
+      --text: #eef2f6;
+      --muted: #9aa6b2;
+      --line: #54606e;
+      --confirmed: #63d297;
+      --likely: #7cb7ff;
+      --possible: #ffd166;
+      --unknown: #a6adbb;
+      --stale: #ef7d7d;
+      --focus: #ffffff;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) 340px;
+      min-height: 100vh;
+    }
+
+    header {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #2a323d;
+      background: var(--panel);
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 650;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 8px;
+      margin-left: auto;
+      align-items: center;
+    }
+
+    input, select {
+      background: #0f1318;
+      color: var(--text);
+      border: 1px solid #34404d;
+      border-radius: 6px;
+      padding: 8px 10px;
+      min-width: 160px;
+    }
+
+    button {
+      background: var(--panel-2);
+      color: var(--text);
+      border: 1px solid #3a4653;
+      border-radius: 6px;
+      padding: 8px 10px;
+      cursor: pointer;
+    }
+
+    button:hover, input:focus, select:focus {
+      outline: 2px solid #5b8cff;
+      outline-offset: 1px;
+    }
+
+    .canvas {
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+    }
+
+    svg {
+      width: 100%;
+      height: calc(100vh - 61px);
+      display: block;
+      background:
+        linear-gradient(#18202a 1px, transparent 1px),
+        linear-gradient(90deg, #18202a 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+
+    .edge {
+      stroke: var(--line);
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrow);
+    }
+
+    .edge-label {
+      fill: var(--muted);
+      font-size: 11px;
+      pointer-events: none;
+    }
+
+    .node rect {
+      fill: var(--panel-2);
+      stroke-width: 2;
+      rx: 7;
+      cursor: pointer;
+    }
+
+    .node text {
+      fill: var(--text);
+      font-size: 12px;
+      pointer-events: none;
+    }
+
+    .node .type {
+      fill: var(--muted);
+      font-size: 10px;
+    }
+
+    .confirmed rect { stroke: var(--confirmed); }
+    .likely rect { stroke: var(--likely); }
+    .possible rect { stroke: var(--possible); }
+    .unknown rect { stroke: var(--unknown); }
+    .stale rect { stroke: var(--stale); }
+
+    .dim { opacity: 0.18; }
+    .selected rect { stroke: var(--focus); stroke-width: 3; }
+
+    aside {
+      border-left: 1px solid #2a323d;
+      background: var(--panel);
+      padding: 16px;
+      overflow: auto;
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 16px;
+    }
+
+    dl {
+      display: grid;
+      grid-template-columns: 92px minmax(0, 1fr);
+      gap: 8px;
+      margin: 14px 0;
+    }
+
+    dt {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    dd {
+      margin: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .legend {
+      display: grid;
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+      border: 1px solid currentColor;
+    }
+
+    @media (max-width: 900px) {
+      main { grid-template-columns: 1fr; }
+      aside { border-left: 0; border-top: 1px solid #2a323d; }
+      svg { height: 70vh; }
+      header { flex-wrap: wrap; }
+      .toolbar { margin-left: 0; width: 100%; flex-wrap: wrap; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="canvas">
+      <header>
+        <h1>Support Infrastructure Diagram</h1>
+        <div class="toolbar">
+          <input id="search" type="search" placeholder="Search repo, app, owner">
+          <select id="status">
+            <option value="all">All statuses</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="likely">Likely</option>
+            <option value="possible">Possible</option>
+            <option value="unknown">Unknown</option>
+            <option value="stale">Stale</option>
+          </select>
+          <button id="reset" type="button">Reset</button>
+        </div>
+      </header>
+      <svg id="graph" role="img" aria-label="Infrastructure dependency graph"></svg>
+    </section>
+    <aside>
+      <h2 id="detail-title">Select a node</h2>
+      <p id="detail-summary">Click a node to inspect repository, ownership, evidence, and connected systems.</p>
+      <dl id="details"></dl>
+      <div class="legend">
+        <span class="badge"><span class="swatch" style="color: var(--confirmed)"></span>confirmed</span>
+        <span class="badge"><span class="swatch" style="color: var(--likely)"></span>likely</span>
+        <span class="badge"><span class="swatch" style="color: var(--possible)"></span>possible</span>
+        <span class="badge"><span class="swatch" style="color: var(--unknown)"></span>unknown</span>
+        <span class="badge"><span class="swatch" style="color: var(--stale)"></span>stale</span>
+      </div>
+    </aside>
+  </main>
+
+  <script>
+    const data = {
+      nodes: [
+        {
+          id: "customer-portal",
+          label: "Customer Portal",
+          type: "frontend",
+          owner: "unknown",
+          repo: "unknown",
+          status: "unknown",
+          evidence: "EV-TBD",
+          notes: "Replace sample nodes with real applications as evidence is gathered."
+        },
+        {
+          id: "account-bff",
+          label: "Account BFF",
+          type: "api",
+          owner: "unknown",
+          repo: "unknown",
+          status: "unknown",
+          evidence: "EV-TBD",
+          notes: "Record local checkout path when known."
+        },
+        {
+          id: "vendor-adapter",
+          label: "Vendor Adapter",
+          type: "integration",
+          owner: "unknown",
+          repo: "unknown",
+          status: "unknown",
+          evidence: "EV-TBD",
+          notes: "Capture contract/interface evidence before vendor escalation."
+        }
+      ],
+      edges: [
+        {
+          from: "customer-portal",
+          to: "account-bff",
+          label: "HTTPS",
+          status: "unknown",
+          evidence: "EV-TBD"
+        },
+        {
+          from: "account-bff",
+          to: "vendor-adapter",
+          label: "request",
+          status: "unknown",
+          evidence: "EV-TBD"
+        }
+      ]
+    };
+
+    const graph = document.getElementById("graph");
+    const search = document.getElementById("search");
+    const status = document.getElementById("status");
+    const reset = document.getElementById("reset");
+    const title = document.getElementById("detail-title");
+    const summary = document.getElementById("detail-summary");
+    const details = document.getElementById("details");
+    let selected = null;
+
+    function layout(nodes) {
+      const width = graph.clientWidth || 1000;
+      const stepX = Math.max(210, Math.floor((width - 120) / Math.max(nodes.length, 1)));
+      return nodes.map((node, index) => ({
+        ...node,
+        x: 70 + index * stepX,
+        y: 120 + (index % 2) * 140
+      }));
+    }
+
+    function visibleNode(node) {
+      const query = search.value.trim().toLowerCase();
+      const statusMatch = status.value === "all" || node.status === status.value;
+      const queryMatch = !query || [node.id, node.label, node.type, node.owner, node.repo, node.notes]
+        .join(" ")
+        .toLowerCase()
+        .includes(query);
+      return statusMatch && queryMatch;
+    }
+
+    function render() {
+      graph.innerHTML = `
+        <defs>
+          <marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L9,3 z" fill="#54606e"></path>
+          </marker>
+        </defs>
+      `;
+      const nodes = layout(data.nodes);
+      const byId = new Map(nodes.map((node) => [node.id, node]));
+      const visible = new Set(nodes.filter(visibleNode).map((node) => node.id));
+
+      data.edges.forEach((edge) => {
+        const from = byId.get(edge.from);
+        const to = byId.get(edge.to);
+        if (!from || !to) return;
+        const dim = !visible.has(from.id) || !visible.has(to.id);
+        const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+        const startX = from.x + 170;
+        const startY = from.y + 28;
+        const endX = to.x;
+        const endY = to.y + 28;
+        const midX = (startX + endX) / 2;
+        path.setAttribute("d", `M ${startX} ${startY} C ${midX} ${startY}, ${midX} ${endY}, ${endX} ${endY}`);
+        path.setAttribute("class", `edge ${dim ? "dim" : ""}`);
+        graph.appendChild(path);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", midX);
+        label.setAttribute("y", ((startY + endY) / 2) - 8);
+        label.setAttribute("class", `edge-label ${dim ? "dim" : ""}`);
+        label.textContent = edge.label;
+        graph.appendChild(label);
+      });
+
+      nodes.forEach((node) => {
+        const group = document.createElementNS("http://www.w3.org/2000/svg", "g");
+        group.setAttribute("class", `node ${node.status} ${visible.has(node.id) ? "" : "dim"} ${selected === node.id ? "selected" : ""}`);
+        group.setAttribute("tabindex", "0");
+        group.setAttribute("role", "button");
+        group.setAttribute("aria-label", node.label);
+        group.addEventListener("click", () => selectNode(node));
+        group.addEventListener("keydown", (event) => {
+          if (event.key === "Enter" || event.key === " ") selectNode(node);
+        });
+
+        const rect = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+        rect.setAttribute("x", node.x);
+        rect.setAttribute("y", node.y);
+        rect.setAttribute("width", 170);
+        rect.setAttribute("height", 56);
+        group.appendChild(rect);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", node.x + 12);
+        label.setAttribute("y", node.y + 24);
+        label.textContent = node.label;
+        group.appendChild(label);
+
+        const type = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        type.setAttribute("x", node.x + 12);
+        type.setAttribute("y", node.y + 43);
+        type.setAttribute("class", "type");
+        type.textContent = `${node.type} - ${node.status}`;
+        group.appendChild(type);
+
+        graph.appendChild(group);
+      });
+    }
+
+    function selectNode(node) {
+      selected = node.id;
+      title.textContent = node.label;
+      summary.textContent = node.notes || "";
+      const rows = [
+        ["ID", node.id],
+        ["Type", node.type],
+        ["Owner", node.owner],
+        ["Repo", node.repo],
+        ["Status", node.status],
+        ["Evidence", node.evidence]
+      ];
+      details.innerHTML = rows.map(([key, value]) => `<dt>${key}</dt><dd>${value || "unknown"}</dd>`).join("");
+      render();
+    }
+
+    search.addEventListener("input", render);
+    status.addEventListener("change", render);
+    reset.addEventListener("click", () => {
+      search.value = "";
+      status.value = "all";
+      selected = null;
+      title.textContent = "Select a node";
+      summary.textContent = "Click a node to inspect repository, ownership, evidence, and connected systems.";
+      details.innerHTML = "";
+      render();
+    });
+    window.addEventListener("resize", render);
+    render();
+  </script>
+</body>
+</html>

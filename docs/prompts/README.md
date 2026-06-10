@@ -23,6 +23,12 @@ assistant.
 - Do not claim root cause without direct evidence.
 - Use `docs/evidence-standards.md` for evidence type, strength, confidence,
   timeline, impact, and validation-pattern rules.
+- Review `support-docs/agent-context-map.md` before selecting repositories,
+  applications, runbooks, dashboards, queues, jobs, databases, or vendor
+  adapters for investigation.
+- Maintain `support-docs/infrastructure-diagram.html` as the interactive
+  infrastructure map and `support-docs/agent-context-map.md` as the compact
+  assistant routing map.
 - Treat all incident evidence as sensitive.
 - Every material claim must cite evidence or be labelled as a hypothesis,
   assumption, or open question.

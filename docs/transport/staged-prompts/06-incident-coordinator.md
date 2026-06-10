@@ -17,6 +17,12 @@ Maintain these additional artifacts whenever they change:
 - decision-log.md
 - handoff-pack.md
 
+Also maintain these long-lived support-docs artifacts when new reusable
+infrastructure knowledge is learned:
+
+- support-docs/infrastructure-diagram.html
+- support-docs/agent-context-map.md
+
 coordinator-state.md must track:
 - current objective
 - current leading hypothesis
@@ -42,6 +48,17 @@ Also maintain:
 - repository evidence need: required repo/code path, local checkout if known,
   branch/commit if known, and access blocker if unknown
 - evidence IDs for every confirmed or ruled-out connection
+
+Before deciding which repository, application, runbook, dashboard, queue, job,
+database, or vendor adapter should be investigated, review
+`support-docs/agent-context-map.md`. Use it as the compact routing index for
+finding likely context. Keep `Facts/context-map.md` incident-specific and keep
+`support-docs/agent-context-map.md` reusable across incidents.
+
+Keep `support-docs/infrastructure-diagram.html` as the user-facing interactive
+view. It should show confirmed, likely, possible, unknown, and stale
+connections so support engineers can inspect the system map without reading the
+compact agent file.
 
 decision-log.md must record every meaningful decision:
 

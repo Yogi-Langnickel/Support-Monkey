@@ -77,10 +77,17 @@ copyable Markdown blocks:
 - support-docs/reference/evidence-standards.md
 - support-docs/reference/windows-wsl.md
 - support-docs/reference/confluence-rovo.md
+- support-docs/infrastructure-diagram.html
+- support-docs/agent-context-map.md
 - support-docs/setup-notes.md
 
 Use `support-docs/` for reusable prompts, templates, reference docs, and setup
 notes only. Do not put incident evidence or case artifacts there.
+Maintain `support-docs/infrastructure-diagram.html` as the interactive
+user-facing application/repository/dependency map. Maintain
+`support-docs/agent-context-map.md` as the compact assistant-facing map, and
+read it before deciding which repository, application, runbook, dashboard,
+queue, job, database, or vendor adapter should be investigated.
 
 When a new incident starts:
 1. Ask for the incident number first.

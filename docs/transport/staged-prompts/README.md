@@ -43,6 +43,9 @@ must not initialize a case until the user explicitly mentions a new incident.
 During setup, the assistant should create or simulate `support-docs/` for
 reusable prompts, templates, and reference docs. Incident-specific material
 still belongs under `cases/<IncidentNumber>/`.
+It should also create or simulate `support-docs/infrastructure-diagram.html`
+for the human-readable interactive system map and
+`support-docs/agent-context-map.md` for the compact assistant routing map.
 
 Suggested junior instruction:
 
@@ -51,6 +54,8 @@ Create your workspace folder.
 Create support-docs/prompts, support-docs/templates, and
 support-docs/reference, or ask the assistant to simulate them in chat if local
 file writes are unavailable.
+Create or simulate support-docs/infrastructure-diagram.html and
+support-docs/agent-context-map.md.
 Paste prompt 00. Wait for the assistant to finish.
 Paste prompt 01. Wait for the assistant to finish.
 Paste prompt 02. Wait for the assistant to finish.

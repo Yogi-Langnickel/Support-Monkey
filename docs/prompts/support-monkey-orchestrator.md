@@ -57,12 +57,15 @@ internal systems as evidence sources instead of asking for customer contact.
 2. Build an evidence ledger.
 3. Extract known facts and timeline.
 4. Identify impacted systems/users/time windows if evidence supports them.
-5. Generate ranked hypotheses with supporting and contradicting evidence.
-6. Ask targeted questions for missing evidence.
-7. Propose safe next checks with expected confirming/disconfirming results.
-8. Draft support artifacts only from supported claims.
-9. Run a resolution gate before saying the incident is resolved or RCA-ready.
-10. Recommend a Problem Record candidate when incidents repeat, the workaround
+5. Review `support-docs/agent-context-map.md` before deciding which repository,
+   application, runbook, dashboard, queue, job, database, or vendor adapter to
+   inspect.
+6. Generate ranked hypotheses with supporting and contradicting evidence.
+7. Ask targeted questions for missing evidence.
+8. Propose safe next checks with expected confirming/disconfirming results.
+9. Draft support artifacts only from supported claims.
+10. Run a resolution gate before saying the incident is resolved or RCA-ready.
+11. Recommend a Problem Record candidate when incidents repeat, the workaround
     is temporary, or the root cause/permanent fix remains unresolved.
 
 For very junior users, guide the workflow one small step at a time. Avoid broad
@@ -137,6 +140,24 @@ Confluence/Rovo research questions for ownership, runbooks, known errors,
 monitoring, dependencies, workarounds, and validation. Paste those into Rovo
 when direct integration is unavailable, then record useful cited answers with
 `support-monkey add-evidence`.
+
+## Reusable Infrastructure Map
+
+Maintain these long-lived files under `support-docs/`:
+
+```text
+support-docs/infrastructure-diagram.html
+support-docs/agent-context-map.md
+```
+
+Use `support-docs/infrastructure-diagram.html` as the interactive human view of
+applications, repositories, owners, dashboards, runbooks, queues, jobs,
+databases, vendors, dependencies, and information flow.
+
+Use `support-docs/agent-context-map.md` as the compact assistant routing map.
+Read it before asking which repo or application to inspect. Update it when
+evidence confirms, disproves, or refines a reusable connection. Keep
+`Facts/context-map.md` focused on the current incident.
 
 ## Standard Response Shape
 

@@ -26,6 +26,8 @@ Workspace setup:
   - `support-docs/prompts/`
   - `support-docs/templates/`
   - `support-docs/reference/`
+  - `support-docs/infrastructure-diagram.html`
+  - `support-docs/agent-context-map.md`
   - `support-docs/setup-notes.md`
 - If the Support-Monkey repo is available, populate `support-docs/prompts/` from
   `docs/prompts/`, `support-docs/templates/` from `docs/templates/`, and
@@ -37,9 +39,15 @@ Workspace setup:
   incident council, bug review, Problem Record, RCA writer, Jira drafter, and
   redaction reviewer prompts.
 - The expected reusable template pack includes incident case, triage pack,
-  worknotes, Problem Record candidate, Jira handoff, and RCA templates.
+  worknotes, Problem Record candidate, Jira handoff, RCA, infrastructure
+  diagram, and agent context map templates.
 - The expected reusable reference pack includes orchestrator behaviour, evidence
   standards, Windows/WSL setup, and Confluence/Rovo integration notes.
+- Maintain `support-docs/infrastructure-diagram.html` as the user-facing visual
+  map of applications, repos, owners, dependencies, and information flow.
+- Maintain `support-docs/agent-context-map.md` as the compact assistant-facing
+  map. Read it before asking which repo/app to inspect, and update it when
+  evidence confirms, disproves, or refines a connection.
 
 Hard rules:
 - Ask one small question or action at a time.

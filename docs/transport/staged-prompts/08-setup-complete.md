@@ -15,11 +15,13 @@ available under `support-docs/`:
 - `support-docs/prompts/`
 - `support-docs/templates/`
 - `support-docs/reference/`
+- `support-docs/infrastructure-diagram.html`
+- `support-docs/agent-context-map.md`
 - `support-docs/setup-notes.md`
 - prompt pack: orchestrator, evidence reviewer, incident council, bug review,
   Problem Record, RCA writer, Jira drafter, and redaction reviewer
 - template pack: incident case, triage pack, worknotes, Problem Record
-  candidate, Jira handoff, and RCA
+  candidate, Jira handoff, RCA, infrastructure diagram, and agent context map
 - reference pack: orchestrator behaviour, evidence standards, Windows/WSL
   setup, and Confluence/Rovo integration notes
 

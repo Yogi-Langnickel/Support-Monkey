@@ -159,4 +159,10 @@ First task:
   Windows/WSL setup, and Confluence/Rovo integration notes. If not, maintain
   them as copyable in-chat Markdown blocks. Keep incident-specific material
   under `cases/<IncidentNumber>/`.
+- Maintain `support-docs/infrastructure-diagram.html` as the interactive
+  user-facing map of applications, repos, owners, dependencies, and information
+  flow. Maintain `support-docs/agent-context-map.md` as the compact
+  assistant-facing routing map, and read it before deciding which repo,
+  application, runbook, dashboard, queue, job, database, or vendor adapter
+  needs investigation.
 ```

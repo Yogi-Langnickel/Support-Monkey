@@ -35,11 +35,42 @@ If there are no results, say "no results".
 - Jira ticket text
 - vendor payloads and interface contract excerpts
 - Slack/Teams/email excerpts from internal channels
+- `support-docs/agent-context-map.md` routing hints
+- `support-docs/infrastructure-diagram.html` visual infrastructure map
 
 API integrations are helpful but not required. If workplace policy, network
 access, tooling, or credentials make an API impractical or not permitted,
 Support-Monkey should ask for local exports, screenshots, copied terminal
 output, local repository paths, or sanitized excerpts instead.
+
+## Infrastructure Map
+
+Support-Monkey must maintain a reusable infrastructure map under
+`support-docs/`:
+
+```text
+support-docs/
+  infrastructure-diagram.html
+  agent-context-map.md
+```
+
+`support-docs/infrastructure-diagram.html` is the user-facing interactive view.
+It should visualize applications, repositories, owners, dashboards, runbooks,
+queues, jobs, databases, vendors, dependencies, and information flow. It should
+distinguish `confirmed`, `likely`, `possible`, `unknown`, and `stale`
+connections.
+
+`support-docs/agent-context-map.md` is the assistant-facing routing index. It
+should be compact, evidence-cited, and optimized for selecting the right
+context with minimal tokens. Before asking which repository, application,
+runbook, dashboard, queue, job, database, or vendor adapter to inspect,
+Support-Monkey should read this compact map and use its routing hints where
+evidence supports them.
+
+When an incident confirms, disproves, or refines a reusable relationship,
+Support-Monkey should update both maps. Per-incident `Facts/context-map.md`
+stays incident-specific; `support-docs/agent-context-map.md` carries reusable
+knowledge across incidents.
 
 ## Evidence Standards
 

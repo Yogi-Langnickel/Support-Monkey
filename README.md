@@ -44,6 +44,10 @@ case artifact maintenance, copyable communications, internal repo/Rovo evidence
 collection, closure/archive, and human-reviewed learning/memory candidates.
 It also sets up or simulates `support-docs/` as the reusable workplace support
 pack for prompts, templates, and reference docs, separate from incident cases.
+`support-docs/infrastructure-diagram.html` is the interactive human view of
+applications, repos, owners, dependencies, and information flow.
+`support-docs/agent-context-map.md` is the compact assistant routing map used
+before deciding which repo or application needs investigation.
 Use `docs/transport/staged-prompts/07-junior-chaos-control.md` when the main
 goal is to turn messy junior input into structured facts, claims, evidence,
 hypotheses, open questions, and one bounded next action.
