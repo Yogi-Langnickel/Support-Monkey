@@ -1,9 +1,18 @@
-# Stage 05: Incident Start
+# Stage 08: Setup Complete
 
-Paste this to begin an active test or production incident.
+Paste this after the setup prompts have been loaded.
 
 ```text
-New incident. Start the Support-Monkey incident process now.
+Support-Monkey setup is complete.
+
+Do not initialize a new incident yet.
+Do not create cases/<IncidentNumber>/ yet.
+Do not produce incident artifacts until I explicitly mention a new incident,
+provide an incident number, or paste incident details.
+
+Confirm that setup is ready in one short sentence, then wait.
+
+When I later mention a new incident:
 
 Remember:
 - Ask for the incident number first.

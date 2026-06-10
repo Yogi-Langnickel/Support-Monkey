@@ -1,4 +1,4 @@
-# Stage 08: Junior Chaos Control
+# Stage 07: Junior Chaos Control
 
 Paste this when Support-Monkey is mainly guiding junior support engineers who
 may paste fragmented, low-quality, or contradictory incident information.

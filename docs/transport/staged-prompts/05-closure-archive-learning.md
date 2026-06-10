@@ -1,4 +1,4 @@
-# Stage 06: Closure, Archive, And Learning
+# Stage 05: Closure, Archive, And Learning
 
 Paste this when the incident is close to resolution, or include it during
 activation if you want the assistant to know the full lifecycle upfront.
