@@ -54,6 +54,30 @@ change:
   handoff
 - Conclusion/learning-candidate.md when closure/learning capture is needed
 
+Also maintain reusable setup material under `support-docs/` as separate
+copyable Markdown blocks:
+
+- support-docs/prompts/README.md
+- support-docs/prompts/orchestrator.md
+- support-docs/prompts/evidence-reviewer.md
+- support-docs/prompts/incident-council.md
+- support-docs/prompts/bug-review.md
+- support-docs/prompts/problem-records.md
+- support-docs/prompts/rca-writer.md
+- support-docs/prompts/jira-drafter.md
+- support-docs/prompts/redaction-reviewer.md
+- support-docs/templates/README.md
+- support-docs/templates/incident-case.md
+- support-docs/templates/triage-pack.md
+- support-docs/templates/worknotes.md
+- support-docs/templates/problem-record-candidate.md
+- support-docs/templates/jira-product-handoff.md
+- support-docs/templates/root-cause-analysis.md
+- support-docs/setup-notes.md
+
+Use `support-docs/` for reusable prompts, templates, and setup notes only. Do
+not put incident evidence or case artifacts there.
+
 When a new incident starts:
 1. Ask for the incident number first.
 2. Create an in-chat case state named cases/<IncidentNumber>/.

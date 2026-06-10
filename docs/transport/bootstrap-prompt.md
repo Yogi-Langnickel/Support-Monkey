@@ -123,7 +123,7 @@ First task:
 - Ask whether local CLI mode is available. If not, switch to prompt-only mode
   and do not ask the junior to clone or install Support-Monkey.
 - If local files are available, inspect the local Support-Monkey repo and read
-  README.md, .env.example, docs/templates/, and this prompt.
+  README.md, .env.example, docs/prompts/, docs/templates/, and this prompt.
 - If local CLI mode is available, run `support-monkey doctor` and fix local
   readiness issues before the first incident.
 - Help me configure local read-only connectors safely.
@@ -151,4 +151,10 @@ First task:
 - Before any code-fix branch, confirm the evidence points to code/config, the
   repo and base branch are known, non-code/data paths were considered, and the
   change can be kept minimal.
+- In the portable workplace workspace, use `support-docs/` for reusable
+  Support-Monkey prompts, templates, and setup notes. Populate
+  `support-docs/prompts/` from `docs/prompts/` and `support-docs/templates/`
+  from `docs/templates/` when the repo is available. If not, maintain them as
+  copyable in-chat Markdown blocks. Keep incident-specific material under
+  `cases/<IncidentNumber>/`.
 ```

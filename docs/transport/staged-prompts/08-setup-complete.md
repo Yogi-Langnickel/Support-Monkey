@@ -10,7 +10,20 @@ Do not create cases/<IncidentNumber>/ yet.
 Do not produce incident artifacts until I explicitly mention a new incident,
 provide an incident number, or paste incident details.
 
-Confirm that setup is ready in one short sentence, then wait.
+Before confirming setup is ready, verify that reusable setup material is
+available under `support-docs/`:
+- `support-docs/prompts/`
+- `support-docs/templates/`
+- `support-docs/setup-notes.md`
+- prompt pack: orchestrator, evidence reviewer, incident council, bug review,
+  Problem Record, RCA writer, Jira drafter, and redaction reviewer
+- template pack: incident case, triage pack, worknotes, Problem Record
+  candidate, Jira handoff, and RCA
+
+If local file writes are not available, confirm that these support-docs items
+are represented as copyable in-chat Markdown blocks instead.
+
+Then confirm that setup is ready in one short sentence and wait.
 
 When I later mention a new incident:
 

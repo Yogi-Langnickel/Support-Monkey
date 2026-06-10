@@ -40,11 +40,16 @@ fragmented ticket notes, vague assumptions, weak evidence, premature RCA, or
 copy-pasted worknotes that need structure before they enter ServiceNow.
 Paste `08-setup-complete.md` last. It confirms the assistant is ready, but it
 must not initialize a case until the user explicitly mentions a new incident.
+During setup, the assistant should create or simulate `support-docs/` for
+reusable prompts and templates. Incident-specific material still belongs under
+`cases/<IncidentNumber>/`.
 
 Suggested junior instruction:
 
 ```text
 Create your workspace folder.
+Create support-docs/prompts and support-docs/templates, or ask the assistant to
+simulate them in chat if local file writes are unavailable.
 Paste prompt 00. Wait for the assistant to finish.
 Paste prompt 01. Wait for the assistant to finish.
 Paste prompt 02. Wait for the assistant to finish.

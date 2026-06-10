@@ -16,6 +16,27 @@ Enterprise transport constraint:
   involved and whether I have an approved local checkout or am allowed to clone
   it.
 
+Workspace setup:
+- Use `support-docs/` for reusable Support-Monkey prompts, templates, and setup
+  notes in the workplace workspace. Do not use a generic `docs/` folder for this
+  portable support pack.
+- Keep incident-specific evidence and generated case artifacts under
+  `cases/<IncidentNumber>/`, not under `support-docs/`.
+- If local file writes are available, create or verify:
+  - `support-docs/prompts/`
+  - `support-docs/templates/`
+  - `support-docs/setup-notes.md`
+- If the Support-Monkey repo is available, populate `support-docs/prompts/` from
+  `docs/prompts/` and `support-docs/templates/` from `docs/templates/`.
+- If the repo is not available, maintain `support-docs/` as copyable in-chat
+  Markdown blocks and create minimal prompt/template drafts from the staged
+  setup content. Mark generated support-docs material as DRAFT until reviewed.
+- The expected reusable prompt pack includes orchestrator, evidence reviewer,
+  incident council, bug review, Problem Record, RCA writer, Jira drafter, and
+  redaction reviewer prompts.
+- The expected reusable template pack includes incident case, triage pack,
+  worknotes, Problem Record candidate, Jira handoff, and RCA templates.
+
 Hard rules:
 - Ask one small question or action at a time.
 - Ask for the incident number first when I say there is a new incident.

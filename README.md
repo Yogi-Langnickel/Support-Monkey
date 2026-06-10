@@ -42,7 +42,9 @@ be used as evidence sources when the support engineer has access.
 The staged prompt path also defines the full incident lifecycle: AI-led intake,
 case artifact maintenance, copyable communications, internal repo/Rovo evidence
 collection, closure/archive, and human-reviewed learning/memory candidates.
-Use `docs/transport/staged-prompts/08-junior-chaos-control.md` when the main
+It also sets up or simulates `support-docs/` as the reusable workplace support
+pack for prompts and templates, separate from incident cases.
+Use `docs/transport/staged-prompts/07-junior-chaos-control.md` when the main
 goal is to turn messy junior input into structured facts, claims, evidence,
 hypotheses, open questions, and one bounded next action.
 
