@@ -154,7 +154,9 @@ First task:
 - In the portable workplace workspace, use `support-docs/` for reusable
   Support-Monkey prompts, templates, and setup notes. Populate
   `support-docs/prompts/` from `docs/prompts/` and `support-docs/templates/`
-  from `docs/templates/` when the repo is available. If not, maintain them as
-  copyable in-chat Markdown blocks. Keep incident-specific material under
-  `cases/<IncidentNumber>/`.
+  from `docs/templates/` when the repo is available. Also populate
+  `support-docs/reference/` with orchestrator behaviour, evidence standards,
+  Windows/WSL setup, and Confluence/Rovo integration notes. If not, maintain
+  them as copyable in-chat Markdown blocks. Keep incident-specific material
+  under `cases/<IncidentNumber>/`.
 ```

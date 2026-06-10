@@ -14,11 +14,14 @@ Before confirming setup is ready, verify that reusable setup material is
 available under `support-docs/`:
 - `support-docs/prompts/`
 - `support-docs/templates/`
+- `support-docs/reference/`
 - `support-docs/setup-notes.md`
 - prompt pack: orchestrator, evidence reviewer, incident council, bug review,
   Problem Record, RCA writer, Jira drafter, and redaction reviewer
 - template pack: incident case, triage pack, worknotes, Problem Record
   candidate, Jira handoff, and RCA
+- reference pack: orchestrator behaviour, evidence standards, Windows/WSL
+  setup, and Confluence/Rovo integration notes
 
 If local file writes are not available, confirm that these support-docs items
 are represented as copyable in-chat Markdown blocks instead.

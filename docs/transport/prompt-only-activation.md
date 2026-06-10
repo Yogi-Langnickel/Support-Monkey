@@ -73,10 +73,14 @@ copyable Markdown blocks:
 - support-docs/templates/problem-record-candidate.md
 - support-docs/templates/jira-product-handoff.md
 - support-docs/templates/root-cause-analysis.md
+- support-docs/reference/orchestrator-behaviour.md
+- support-docs/reference/evidence-standards.md
+- support-docs/reference/windows-wsl.md
+- support-docs/reference/confluence-rovo.md
 - support-docs/setup-notes.md
 
-Use `support-docs/` for reusable prompts, templates, and setup notes only. Do
-not put incident evidence or case artifacts there.
+Use `support-docs/` for reusable prompts, templates, reference docs, and setup
+notes only. Do not put incident evidence or case artifacts there.
 
 When a new incident starts:
 1. Ask for the incident number first.

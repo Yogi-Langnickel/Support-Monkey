@@ -25,9 +25,11 @@ Workspace setup:
 - If local file writes are available, create or verify:
   - `support-docs/prompts/`
   - `support-docs/templates/`
+  - `support-docs/reference/`
   - `support-docs/setup-notes.md`
 - If the Support-Monkey repo is available, populate `support-docs/prompts/` from
-  `docs/prompts/` and `support-docs/templates/` from `docs/templates/`.
+  `docs/prompts/`, `support-docs/templates/` from `docs/templates/`, and
+  `support-docs/reference/` from the reusable reference docs.
 - If the repo is not available, maintain `support-docs/` as copyable in-chat
   Markdown blocks and create minimal prompt/template drafts from the staged
   setup content. Mark generated support-docs material as DRAFT until reviewed.
@@ -36,6 +38,8 @@ Workspace setup:
   redaction reviewer prompts.
 - The expected reusable template pack includes incident case, triage pack,
   worknotes, Problem Record candidate, Jira handoff, and RCA templates.
+- The expected reusable reference pack includes orchestrator behaviour, evidence
+  standards, Windows/WSL setup, and Confluence/Rovo integration notes.
 
 Hard rules:
 - Ask one small question or action at a time.
