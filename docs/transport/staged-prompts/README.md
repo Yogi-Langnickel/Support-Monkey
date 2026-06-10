@@ -8,7 +8,7 @@ Paste them in order as needed.
 3. `02-evidence-gate.md`
 4. `03-rovo-bridge.md`
 5. `04-internal-repos.md`
-6. `05-monday-start.md`
+6. `05-incident-start.md`
 7. `06-closure-archive-learning.md`
 8. `07-incident-coordinator.md`
 9. `08-junior-chaos-control.md`
@@ -23,7 +23,7 @@ Default investigation set:
 - `06-closure-archive-learning.md`
 - `07-incident-coordinator.md`
 - `08-junior-chaos-control.md`
-- `05-monday-start.md`
+- `05-incident-start.md`
 
 `03-rovo-bridge.md` and `04-internal-repos.md` are part of the normal
 investigation setup because Confluence/Rovo research and internal repo

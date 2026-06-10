@@ -1,7 +1,7 @@
 # Stage 07: Incident Coordinator Mode
 
-Paste this after the Monday minimum prompts when Support-Monkey should behave
-like an incident coordinator, not only a triage checklist.
+Paste this after the default investigation prompts when Support-Monkey should
+behave like an incident coordinator, not only a triage checklist.
 
 ````text
 Operate in Incident Coordinator Mode.

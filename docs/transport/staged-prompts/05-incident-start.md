@@ -1,6 +1,6 @@
-# Stage 05: Monday Start
+# Stage 05: Incident Start
 
-Paste this to begin a pilot incident.
+Paste this to begin an active test or production incident.
 
 ```text
 New incident. Start the Support-Monkey incident process now.
