@@ -17,7 +17,7 @@ assistant first. Then append the activation addendum below.
 Copy everything between `BEGIN PROMPT-ONLY ADDENDUM` and
 `END PROMPT-ONLY ADDENDUM` into the same chat after the bootstrap prompt.
 
-```text
+````text
 BEGIN PROMPT-ONLY ADDENDUM
 
 PROMPT-ONLY MODE:
@@ -107,7 +107,8 @@ For every step, respond with:
 When I say "new incident", begin now.
 
 END PROMPT-ONLY ADDENDUM
-```
+
+````
 
 ## Rovo Bridge
 

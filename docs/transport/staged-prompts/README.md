@@ -13,21 +13,23 @@ Paste them in order as needed.
 8. `07-incident-coordinator.md`
 9. `08-junior-chaos-control.md`
 
-Minimum Monday set:
+Default investigation set:
 
 - `00-core-activation.md`
 - `01-case-artifacts.md`
 - `02-evidence-gate.md`
+- `03-rovo-bridge.md`
+- `04-internal-repos.md`
 - `06-closure-archive-learning.md`
 - `07-incident-coordinator.md`
 - `08-junior-chaos-control.md`
 - `05-monday-start.md`
 
-Add `03-rovo-bridge.md` when Confluence/Rovo is needed.
-Add `04-internal-repos.md` when the incident points to code, configuration,
-deployment, ownership, or dependency evidence in an internal application repo.
-Prompt 04 also includes the optional `<IncidentNumber>-fix` branch path when a
-minimal code or config fix is evidence-backed and approved.
+`03-rovo-bridge.md` and `04-internal-repos.md` are part of the normal
+investigation setup because Confluence/Rovo research and internal repo
+discovery are common support paths. Prompt 04 also includes the optional
+`<IncidentNumber>-fix` branch path when a minimal code or config fix is
+evidence-backed and approved.
 Add or pre-load `06-closure-archive-learning.md` so the assistant knows how to
 close, archive, create learning candidates, and prepare reviewed memory.
 Add `07-incident-coordinator.md` when you want Support-Monkey to maintain an
@@ -44,6 +46,8 @@ Create your workspace folder.
 Paste prompt 00. Wait for the assistant to finish.
 Paste prompt 01. Wait for the assistant to finish.
 Paste prompt 02. Wait for the assistant to finish.
+Paste prompt 03. Wait for the assistant to finish.
+Paste prompt 04. Wait for the assistant to finish.
 Paste prompt 06. Wait for the assistant to finish.
 Paste prompt 07. Wait for the assistant to finish.
 Paste prompt 08. Wait for the assistant to finish.
@@ -51,8 +55,6 @@ Paste prompt 05. Wait for the assistant to ask for the incident.
 Then say: I have a new incident INC001234.
 ```
 
-Paste prompt 03 later when Rovo/Confluence is needed.
-Paste prompt 04 later when the incident points to an internal app/repo.
 Paste prompt 07 during setup when you want coordinator behavior active from
 the start.
 Paste prompt 08 during setup when Support-Monkey is primarily guiding juniors
